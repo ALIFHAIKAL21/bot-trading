@@ -33,154 +33,163 @@ except ImportError:
 
 def build_live_execution_candlestick_chart(symbol: str, timeframe: str, orders: list) -> go.Figure:
     """Build interactive candlestick chart overlaid with EMA and actual BUY/SELL trade executions."""
-    loader = MarketDataLoader(cache_dir=str(root_dir / "data" / "cache"))
     try:
-        df = loader.load_or_fetch(symbol, timeframe=timeframe, history_days=3 if timeframe in ("1m", "5m") else 14)
-    except Exception:
-        df = pd.DataFrame()
+        loader = MarketDataLoader(cache_dir=str(root_dir / "data" / "cache"))
+        try:
+            df = loader.load_or_fetch(symbol, timeframe=timeframe, history_days=2 if timeframe in ("1m", "5m") else 14)
+        except Exception:
+            df = pd.DataFrame()
 
-    if df.empty or len(df) < 5:
+        if df.empty or len(df) < 5:
+            fig = go.Figure()
+            fig.update_layout(
+                title=f"📈 Menunggu pembentukan lilin {symbol} ({timeframe})...",
+                height=420,
+                template="plotly_dark",
+            )
+            return fig
+
+        # Take last 80 bars for clean, responsive, readable display
+        df_slice = df.iloc[-80:].copy()
+        df_slice["ema12"] = df_slice["close"].ewm(span=12, adjust=False).mean()
+        df_slice["ema26"] = df_slice["close"].ewm(span=26, adjust=False).mean()
+
+        fig = make_subplots(
+            rows=2, cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.03,
+            row_heights=[0.78, 0.22],
+        )
+
+        # 1. Candlestick
+        fig.add_trace(
+            go.Candlestick(
+                x=df_slice.index,
+                open=df_slice["open"],
+                high=df_slice["high"],
+                low=df_slice["low"],
+                close=df_slice["close"],
+                name=f"{symbol} OHLC",
+                increasing_line_color="#00E676",
+                decreasing_line_color="#FF5252",
+            ),
+            row=1, col=1,
+        )
+
+        # 2. EMAs
+        fig.add_trace(
+            go.Scatter(
+                x=df_slice.index, y=df_slice["ema12"],
+                mode="lines",
+                line=dict(color="#29B6F6", width=1.5),
+                name="EMA 12",
+            ),
+            row=1, col=1,
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=df_slice.index, y=df_slice["ema26"],
+                mode="lines",
+                line=dict(color="#FFA726", width=1.5),
+                name="EMA 26",
+            ),
+            row=1, col=1,
+        )
+
+        # 3. Overlay Executed Orders (BUY = Green ▲, SELL = Red ▼)
+        if orders:
+            min_ts = df_slice.index.min()
+            max_ts = df_slice.index.max()
+            buy_x, buy_y, buy_txt = [], [], []
+            sell_x, sell_y, sell_txt = [], [], []
+
+            for o in orders:
+                try:
+                    o_sym = o.get("symbol", "")
+                    if o_sym and o_sym.upper() not in (symbol.upper(), "XAU/USD" if "XAU" in symbol.upper() else "BTC/USDT"):
+                        continue
+
+                    o_ts = pd.to_datetime(o.get("bar_timestamp", ""), utc=True)
+                    fill_px = float(o.get("fill_price", 0.0))
+                    qty = float(o.get("qty", 0.0))
+                    side = str(o.get("side", "")).upper()
+
+                    if min_ts <= o_ts <= max_ts:
+                        if side == "BUY":
+                            buy_x.append(o_ts)
+                            buy_y.append(fill_px)
+                            buy_txt.append(f"BUY @ ${fill_px:,.2f}<br>Qty: {qty:.4f}")
+                        elif side == "SELL":
+                            sell_x.append(o_ts)
+                            sell_y.append(fill_px)
+                            sell_txt.append(f"SELL @ ${fill_px:,.2f}<br>Qty: {qty:.4f}")
+                except Exception:
+                    continue
+
+            if buy_x:
+                fig.add_trace(
+                    go.Scatter(
+                        x=buy_x, y=buy_y,
+                        mode="markers+text",
+                        marker=dict(symbol="triangle-up", size=16, color="#00E676", line=dict(width=1.5, color="#ffffff")),
+                        text=["▲ BUY"] * len(buy_x),
+                        textposition="bottom center",
+                        textfont=dict(color="#00E676", size=11, family="sans-serif"),
+                        name="Bot BUY Fill",
+                        hovertext=buy_txt,
+                        hoverinfo="text+x",
+                    ),
+                    row=1, col=1,
+                )
+
+            if sell_x:
+                fig.add_trace(
+                    go.Scatter(
+                        x=sell_x, y=sell_y,
+                        mode="markers+text",
+                        marker=dict(symbol="triangle-down", size=16, color="#FF1744", line=dict(width=1.5, color="#ffffff")),
+                        text=["▼ SELL"] * len(sell_x),
+                        textposition="top center",
+                        textfont=dict(color="#FF1744", size=11, family="sans-serif"),
+                        name="Bot SELL Fill",
+                        hovertext=sell_txt,
+                        hoverinfo="text+x",
+                    ),
+                    row=1, col=1,
+                )
+
+        # 4. Volume Bars in Row 2
+        colors = ["#00E676" if c >= o else "#FF5252" for c, o in zip(df_slice["close"], df_slice["open"])]
+        fig.add_trace(
+            go.Bar(
+                x=df_slice.index,
+                y=df_slice["volume"],
+                name="Volume",
+                marker_color=colors,
+                showlegend=False,
+            ),
+            row=2, col=1,
+        )
+
+        fig.update_layout(
+            template="plotly_dark",
+            height=520,
+            margin=dict(l=20, r=20, t=40, b=20),
+            xaxis_rangeslider_visible=False,
+            title=f"📈 Real-Time Price Action & AI Execution Markers: {symbol} ({timeframe})",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        )
+        fig.update_yaxes(title_text="Price ($)", row=1, col=1)
+        fig.update_yaxes(title_text="Vol", row=2, col=1)
+        return fig
+    except Exception as chart_err:
         fig = go.Figure()
         fig.update_layout(
-            title=f"Awaiting market candle data for {symbol} ({timeframe})...",
-            height=480,
+            title=f"📈 Candlestick Live: Menyiapkan data lilin {symbol} ({timeframe})...",
+            height=420,
             template="plotly_dark",
         )
         return fig
-
-    # Take last 80 bars for clean, responsive, readable display
-    df_slice = df.iloc[-80:].copy()
-    df_slice["ema12"] = df_slice["close"].ewm(span=12, adjust=False).mean()
-    df_slice["ema26"] = df_slice["close"].ewm(span=26, adjust=False).mean()
-
-    fig = make_subplots(
-        rows=2, cols=1,
-        shared_xaxes=True,
-        vertical_spacing=0.03,
-        row_heights=[0.78, 0.22],
-    )
-
-    # 1. Candlestick
-    fig.add_trace(
-        go.Candlestick(
-            x=df_slice.index,
-            open=df_slice["open"],
-            high=df_slice["high"],
-            low=df_slice["low"],
-            close=df_slice["close"],
-            name=f"{symbol} OHLC",
-            increasing_line_color="#00E676",
-            decreasing_line_color="#FF5252",
-        ),
-        row=1, col=1,
-    )
-
-    # 2. EMAs
-    fig.add_trace(
-        go.Scatter(
-            x=df_slice.index, y=df_slice["ema12"],
-            mode="lines",
-            line=dict(color="#29B6F6", width=1.5),
-            name="EMA 12",
-        ),
-        row=1, col=1,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=df_slice.index, y=df_slice["ema26"],
-            mode="lines",
-            line=dict(color="#FFA726", width=1.5),
-            name="EMA 26",
-        ),
-        row=1, col=1,
-    )
-
-    # 3. Overlay Executed Orders (BUY = Green ▲, SELL = Red ▼)
-    if orders:
-        min_ts = df_slice.index.min()
-        max_ts = df_slice.index.max()
-        buy_x, buy_y, buy_txt = [], [], []
-        sell_x, sell_y, sell_txt = [], [], []
-
-        for o in orders:
-            try:
-                o_sym = o.get("symbol", "")
-                if o_sym and o_sym.upper() not in (symbol.upper(), "XAU/USD" if "XAU" in symbol.upper() else "BTC/USDT"):
-                    continue
-
-                o_ts = pd.to_datetime(o.get("bar_timestamp", ""), utc=True)
-                fill_px = float(o.get("fill_price", 0.0))
-                qty = float(o.get("qty", 0.0))
-                side = str(o.get("side", "")).upper()
-
-                if min_ts <= o_ts <= max_ts:
-                    if side == "BUY":
-                        buy_x.append(o_ts)
-                        buy_y.append(fill_px)
-                        buy_txt.append(f"BUY @ ${fill_px:,.2f}<br>Qty: {qty:.4f}")
-                    elif side == "SELL":
-                        sell_x.append(o_ts)
-                        sell_y.append(fill_px)
-                        sell_txt.append(f"SELL @ ${fill_px:,.2f}<br>Qty: {qty:.4f}")
-            except Exception:
-                continue
-
-        if buy_x:
-            fig.add_trace(
-                go.Scatter(
-                    x=buy_x, y=buy_y,
-                    mode="markers+text",
-                    marker=dict(symbol="triangle-up", size=16, color="#00E676", line=dict(width=1.5, color="#ffffff")),
-                    text=["▲ BUY"] * len(buy_x),
-                    textposition="bottom center",
-                    textfont=dict(color="#00E676", size=11, family="sans-serif"),
-                    name="Bot BUY Fill",
-                    hovertext=buy_txt,
-                    hoverinfo="text+x",
-                ),
-                row=1, col=1,
-            )
-
-        if sell_x:
-            fig.add_trace(
-                go.Scatter(
-                    x=sell_x, y=sell_y,
-                    mode="markers+text",
-                    marker=dict(symbol="triangle-down", size=16, color="#FF1744", line=dict(width=1.5, color="#ffffff")),
-                    text=["▼ SELL"] * len(sell_x),
-                    textposition="top center",
-                    textfont=dict(color="#FF1744", size=11, family="sans-serif"),
-                    name="Bot SELL Fill",
-                    hovertext=sell_txt,
-                    hoverinfo="text+x",
-                ),
-                row=1, col=1,
-            )
-
-    # 4. Volume Bars in Row 2
-    colors = ["#00E676" if c >= o else "#FF5252" for c, o in zip(df_slice["close"], df_slice["open"])]
-    fig.add_trace(
-        go.Bar(
-            x=df_slice.index,
-            y=df_slice["volume"],
-            name="Volume",
-            marker_color=colors,
-            showlegend=False,
-        ),
-        row=2, col=1,
-    )
-
-    fig.update_layout(
-        template="plotly_dark",
-        height=520,
-        margin=dict(l=20, r=20, t=40, b=20),
-        xaxis_rangeslider_visible=False,
-        title=f"📈 Real-Time Price Action & AI Execution Markers: {symbol} ({timeframe})",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    )
-    fig.update_yaxes(title_text="Price ($)", row=1, col=1)
-    fig.update_yaxes(title_text="Vol", row=2, col=1)
-    return fig
 
 
 def render_tradingview_widget(symbol: str, timeframe: str):
@@ -832,12 +841,18 @@ elif selected_tab == "💼 Live Paper Trading":
 
     with chart_tab1:
         st.caption("Grafik Candlestick interaktif lengkap dengan garis EMA 12/26, volume, serta titik eksekusi beli (▲ hijau) dan jual (▼ merah) langsung dari bot.")
-        fig_candles = build_live_execution_candlestick_chart(active_chart_sym, active_chart_tf, orders)
-        st.plotly_chart(fig_candles, use_container_width=True)
+        try:
+            fig_candles = build_live_execution_candlestick_chart(active_chart_sym, active_chart_tf, orders)
+            st.plotly_chart(fig_candles, use_container_width=True)
+        except Exception as e:
+            st.info(f"⏳ Menyiapkan data visualisasi candlestick ({e})...")
 
     with chart_tab2:
         st.caption("Streaming live candlestick real-time langsung dari bursa pasar dunia via TradingView.")
-        render_tradingview_widget(active_chart_sym, active_chart_tf)
+        try:
+            render_tradingview_widget(active_chart_sym, active_chart_tf)
+        except Exception as e:
+            st.info(f"⏳ Menyiapkan visualisasi TradingView ({e})...")
 
     st.markdown("---")
 

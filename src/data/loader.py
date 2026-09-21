@@ -86,7 +86,17 @@ class MarketDataLoader:
         logger.info(f"Fetching CCXT data for {symbol} (as {target_symbol}, {timeframe}) starting from {since_ms}...")
 
         batch_count = 0
-        while True:
+        max_batches = 10 if timeframe in ("1m", "5m") else 60
+        tf_ms_map = {
+            "1m": 60 * 1000,
+            "5m": 300 * 1000,
+            "15m": 900 * 1000,
+            "1h": 3600 * 1000,
+            "1d": 86400 * 1000,
+        }
+        tf_ms = tf_ms_map.get(timeframe, 3600 * 1000)
+
+        while batch_count < max_batches:
             retries = 0
             batch = None
             while retries < max_retries:
@@ -122,7 +132,6 @@ class MarketDataLoader:
 
             # Safeguard: break if last_ts is within 1 timeframe of now
             now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
-            tf_ms = 3600 * 1000 if timeframe == "1h" else 86400 * 1000
             if last_ts >= now_ms - tf_ms:
                 break
 
@@ -167,13 +176,24 @@ class MarketDataLoader:
             else:
                 yf_symbol = f"{base}-{quote}"
 
-        yf_interval = "1h" if timeframe == "1h" else "1d"
-        # yfinance 1h data is restricted to max 730 days
-        period_str = "730d" if timeframe == "1h" else f"{history_days}d"
+        if timeframe == "1m":
+            yf_interval = "1m"
+            period_str = "5d"
+        elif timeframe == "5m":
+            yf_interval = "5m"
+            period_str = "5d"
+        elif timeframe == "15m":
+            yf_interval = "15m"
+            period_str = "14d"
+        elif timeframe == "1h":
+            yf_interval = "1h"
+            period_str = "60d" if history_days <= 60 else "730d"
+        else:
+            yf_interval = "1d"
+            period_str = f"{history_days}d"
 
         logger.warning("=" * 70)
-        logger.warning(f"FALLBACK WARNING: Fetching yfinance data for {yf_symbol} ({yf_interval})")
-        logger.warning("yfinance 1h data is strictly capped at ~730 days and uses float32 prices.")
+        logger.warning(f"FALLBACK: Fetching yfinance data for {yf_symbol} ({yf_interval}, {period_str})")
         logger.warning("=" * 70)
 
         ticker = yf.Ticker(yf_symbol)
@@ -208,6 +228,11 @@ class MarketDataLoader:
         if df.empty:
             return df
 
+        try:
+            df.index = df.index.floor(freq)
+        except Exception:
+            pass
+
         df = df[~df.index.duplicated(keep="first")].sort_index()
 
         # Reindex to uniform regular frequency
@@ -225,14 +250,11 @@ class MarketDataLoader:
             df.loc[missing_bars_idx, "is_gap_filled"] = True
             df.loc[missing_bars_idx, "is_zero_volume"] = True
 
-            if self.gap_fill_policy == "ffill_zero_vol":
-                df["close"] = df["close"].ffill()
-                df["open"] = df["open"].fillna(df["close"])
-                df["high"] = df["high"].fillna(df["close"])
-                df["low"] = df["low"].fillna(df["close"])
-                df["volume"] = df["volume"].fillna(0.0)
-            else:
-                df = df.ffill()
+            df["close"] = df["close"].ffill().bfill()
+            df["open"] = df["open"].fillna(df["close"])
+            df["high"] = df["high"].fillna(df["close"])
+            df["low"] = df["low"].fillna(df["close"])
+            df["volume"] = df["volume"].fillna(0.0)
         else:
             if "is_gap_filled" not in df.columns:
                 df["is_gap_filled"] = False
@@ -248,12 +270,24 @@ class MarketDataLoader:
         force_refresh: bool = False,
     ) -> pd.DataFrame:
         """Load from local Parquet cache if valid, otherwise fetch from primary source."""
+        # Auto-adjust history_days for scalping so we never query millions of high-frequency candles
+        if history_days == 1095:
+            if timeframe == "1m":
+                history_days = 2
+            elif timeframe == "5m":
+                history_days = 5
+            elif timeframe == "15m":
+                history_days = 14
+            elif timeframe == "1h":
+                history_days = 60
+
         cache_path = self.get_cache_path(symbol, timeframe)
+        min_cached_bars = 50 if timeframe in ("1m", "5m") else 500
 
         if not force_refresh and cache_path.exists():
             try:
                 df = pd.read_parquet(cache_path)
-                if not df.empty and len(df) >= 20000:
+                if not df.empty and len(df) >= min_cached_bars:
                     logger.info(
                         f"Loaded {len(df):,} bars for {symbol} ({timeframe}) from cache: {cache_path}"
                     )
@@ -291,8 +325,17 @@ class MarketDataLoader:
         if df.empty:
             raise ValueError(f"Could not load data for {symbol} from either CCXT or yfinance.")
 
-        # Clean and gap-fill
-        df = self.clean_and_fill_gaps(df, freq="1h" if timeframe == "1h" else "1d")
+        # Clean and gap-fill with appropriate frequency
+        if timeframe == "1m":
+            freq_str = "1min"
+        elif timeframe == "5m":
+            freq_str = "5min"
+        elif timeframe == "1h":
+            freq_str = "1h"
+        else:
+            freq_str = "1D"
+
+        df = self.clean_and_fill_gaps(df, freq=freq_str)
 
         # Save to Parquet cache
         df.to_parquet(cache_path)
