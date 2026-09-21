@@ -1,0 +1,96 @@
+{
+  "dataset": {
+    "symbol": "BTC/USDT",
+    "period": "LOCKED_TEST",
+    "start_time": "2026-06-04 09:00:00+00:00",
+    "end_time": "2026-09-21 20:00:00+00:00",
+    "n_bars": 2628,
+    "quarantine_verified": true
+  },
+  "verdict": {
+    "status": "NO-GO",
+    "primary_strategy": "Model B LightGBM Directional + Turnover Controls",
+    "rationale": "Statistical edge or risk parameters did not pass strict institutional hurdle."
+  },
+  "strategies": {
+    "primary_model_b": {
+      "cagr": -0.0005,
+      "annualized_vol": 0.0037,
+      "sharpe_ratio": -0.1212,
+      "sortino_ratio": -0.0498,
+      "calmar_ratio": -0.2522,
+      "max_drawdown": 0.0018,
+      "win_rate": 0.4507,
+      "profit_factor": 0.9734,
+      "avg_exposure": 0.0011,
+      "annual_turnover": 4.1744,
+      "cum_return_pct": -0.01,
+      "total_trades": 33,
+      "total_turnover": 1.25,
+      "deflated_sharpe_ratio": 0.0,
+      "sharpe_95ci_low": -4.96,
+      "sharpe_95ci_high": 2.72,
+      "decision_reasons": {
+        "below_entry_threshold": 2471,
+        "cooldown_active": 32,
+        "edge_below_cost_hurdle": 31,
+        "dust_rebalance_suppressed": 26,
+        "hysteresis_band_hold": 21,
+        "entry_hurdle_passed": 16,
+        "exit_threshold_triggered": 11,
+        "min_holding_bars_active": 7,
+        "crisis_regime_blocked": 7,
+        "crisis_regime_exit": 5,
+        "rebalance_position_adjusted": 1
+      }
+    },
+    "meta_stacking_model": {
+      "cagr": 0.0,
+      "annualized_vol": 0.0,
+      "sharpe_ratio": 0.0,
+      "sortino_ratio": 0.0,
+      "calmar_ratio": 0.0,
+      "max_drawdown": 0.0,
+      "win_rate": 0.0,
+      "profit_factor": 1.0,
+      "avg_exposure": 0.0,
+      "annual_turnover": 0.0,
+      "cum_return_pct": 0.0,
+      "total_trades": 0,
+      "total_turnover": 0.0
+    },
+    "buy_and_hold_benchmark": {
+      "cagr": 1.836,
+      "annualized_vol": 0.4023,
+      "sharpe_ratio": 2.7922,
+      "sortino_ratio": 3.8693,
+      "calmar_ratio": 13.7247,
+      "max_drawdown": 0.1338,
+      "win_rate": 0.5048,
+      "profit_factor": 1.0999,
+      "avg_exposure": 0.9996,
+      "annual_turnover": 3.3333,
+      "cum_return_pct": 36.71
+    },
+    "time_shuffled_baseline": {
+      "cagr": -0.0187,
+      "annualized_vol": 0.0029,
+      "sharpe_ratio": -6.4612,
+      "sortino_ratio": -3.5705,
+      "calmar_ratio": -2.8864,
+      "max_drawdown": 0.0065,
+      "win_rate": 0.2254,
+      "profit_factor": 0.3651,
+      "avg_exposure": 0.0011,
+      "annual_turnover": 18.787,
+      "cum_return_pct": -0.56
+    },
+    "monte_carlo_random_baseline": {
+      "mc_sharpe_mean": -22.5902,
+      "mc_sharpe_95th": -19.4677,
+      "mc_sharpe_max": -17.9195,
+      "mc_cagr_mean": -0.873,
+      "mc_cagr_95th": -0.8412
+    }
+  }
+}

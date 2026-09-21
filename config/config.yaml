@@ -1,0 +1,169 @@
+# Configuration for Multi-Model Quant Research and Paper-Trading MVP
+
+system:
+  seed: 42
+  device: "auto"  # "auto", "cuda", or "cpu"
+  num_workers: 4
+
+market:
+  symbols:
+    - "BTC/USDT"
+    - "ETH/USDT"
+  equity_symbols:
+    - "BBCA.JK"
+  timeframe: "1h"
+  horizon: 12        # 12 bars (12 hours)
+  history_days: 1095 # 3 years (approx 26,280 bars)
+
+data:
+  primary_source: "binance"
+  fallback_source: "yfinance"
+  cache_dir: "data/cache"
+  gap_fill_policy: "ffill_zero_vol"
+  include_funding_rate: true
+  include_open_interest: true
+
+features:
+  return_windows: [1, 3, 6, 12, 24]
+  volatility_windows: [6, 12, 24, 72]
+  atr_period: 14
+  rsi_period: 14
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+  bollinger_period: 20
+  bollinger_std: 2.0
+  volume_zscore_window: 24
+  skew_kurtosis_windows: [24, 72]
+  htf_timeframes:
+    - "4h"
+    - "1d"
+  whitelist:
+    - "log_ret_1"
+    - "log_ret_3"
+    - "log_ret_6"
+    - "log_ret_12"
+    - "log_ret_24"
+    - "realized_vol_6"
+    - "realized_vol_12"
+    - "realized_vol_24"
+    - "realized_vol_72"
+    - "atr_14"
+    - "natr_14"
+    - "rsi_14"
+    - "macd"
+    - "macd_signal"
+    - "macd_hist"
+    - "boll_pct_b"
+    - "boll_bandwidth"
+    - "vol_zscore_24"
+    - "body_ratio"
+    - "upper_wick_ratio"
+    - "lower_wick_ratio"
+    - "skew_24"
+    - "kurt_24"
+    - "skew_72"
+    - "kurt_72"
+    - "htf_4h_trend"
+    - "htf_1d_trend"
+    - "sin_hour"
+    - "cos_hour"
+    - "sin_dow"
+    - "cos_dow"
+
+labels:
+  tp_multiplier: 2.0   # Take profit = 2.0 * ATR
+  sl_multiplier: 1.5   # Stop loss = 1.5 * ATR
+  vertical_barrier: 12 # Max holding period = 12 bars
+  min_return_filter: 0.001
+
+models:
+  model_a: # Foundation Forecaster (Chronos-Bolt)
+    enabled: true
+    model_id: "amazon/chronos-bolt-tiny"  # "amazon/chronos-bolt-tiny" or "amazon/chronos-bolt-small"
+    context_length: 512
+    prediction_length: 12
+    batch_size: 64
+    cache_predictions: true
+
+  model_b: # Tabular Direction Model (LightGBM)
+    enabled: true
+    n_estimators: 250
+    learning_rate: 0.03
+    max_depth: 5
+    num_leaves: 31
+    subsample: 0.8
+    colsample_bytree: 0.8
+    optuna_trials: 15
+    tabpfn_enabled: false
+
+  model_c: # Deep Sequence Model (Conv/GRU Multi-Task)
+    enabled: true
+    architecture: "conv_gru"  # "conv_gru" or "patch_tst"
+    seq_len: 72
+    d_model: 64
+    n_layers: 2
+    dropout: 0.2
+    epochs: 25
+    batch_size: 64
+    lr: 0.001
+    weight_decay: 0.0001
+    early_stopping_patience: 5
+
+  model_d: # Sentiment & News Gate (FinBERT)
+    enabled: true
+    model_id: "ProsusAI/finbert"
+    rss_feeds:
+      - "https://www.coindesk.com/arc/outboundfeeds/rss/"
+      - "https://cointelegraph.com/rss"
+    use_sentiment_gate: false  # False for 3yr backtest, true for live/paper & recent OOS
+    veto_threshold: -0.4
+
+  model_e: # Regime Detector (Causal Gaussian HMM)
+    enabled: true
+    n_components: 3
+    covariance_type: "full"
+    n_iter: 100
+    features:
+      - "log_ret_1"
+      - "realized_vol_12"
+      - "vol_zscore_24"
+
+ensemble:
+  method: "logistic_regression" # "logistic_regression" or "lightgbm"
+  cv_splits: 5
+  embargo_bars: 12
+  l2_c: 1.0
+
+risk:
+  target_annual_vol: 0.25
+  kelly_fraction: 0.25
+  max_leverage: 1.0
+  max_position_pct: 0.40
+  daily_loss_limit_pct: 0.03
+  max_drawdown_limit_pct: 0.15
+  cooldown_bars: 2
+  entry_threshold: 0.54
+  exit_threshold: 0.48
+  expected_edge_hurdle_multiplier: 2.0
+  round_trip_cost: 0.0030
+  min_holding_bars: 3
+  max_daily_trades: 6
+  dust_rebalance_threshold: 0.05
+  hard_stop_loss_pct: 0.03
+  trade_horizon_bars: 12
+
+backtest:
+  initial_capital: 10000.0
+  taker_fee: 0.0010        # 10 bps
+  base_slippage: 0.0005    # 5 bps
+  vol_slippage_coeff: 0.05
+  perp_funding_rate_8h: 0.0001
+  monte_carlo_runs: 200
+
+service:
+  host: "127.0.0.1"
+  port: 8000
+  db_path: "data/paper_trading.db"
+  poll_interval_seconds: 60
+  live_execution_enabled: false  # Safety default

@@ -1,0 +1,46 @@
+{
+  "1_baseline_static": {
+    "name": "Static Equal-Weight with Turnover Controls",
+    "trades": 395,
+    "turnover": 19.04,
+    "cum_return_pct": 6.46,
+    "net_sharpe": 4.298,
+    "max_drawdown_pct": 0.19,
+    "win_rate_pct": 59.51,
+    "profit_factor": 2.091
+  },
+  "2_online_weights": {
+    "name": "+ Online Hedge/EWA Dynamic Reweighting",
+    "trades": 4,
+    "turnover": 0.12,
+    "cum_return_pct": 0.02,
+    "net_sharpe": 0.245,
+    "max_drawdown_pct": 0.03,
+    "win_rate_pct": 62.5,
+    "profit_factor": 1.364,
+    "final_weights": {
+      "model_b": 0.9,
+      "prior": 0.1
+    }
+  },
+  "3_circuit_breakers": {
+    "name": "+ Auto-Degrade Circuit Breakers",
+    "trades": 0,
+    "turnover": 0.0,
+    "cum_return_pct": 0.0,
+    "net_sharpe": 0.0,
+    "max_drawdown_pct": 0.0,
+    "win_rate_pct": 0.0,
+    "profit_factor": 1.0
+  },
+  "4_full_adaptive": {
+    "name": "Full Adaptive Layer (Online + Breakers + Regime)",
+    "trades": 0,
+    "turnover": 0.0,
+    "cum_return_pct": 0.0,
+    "net_sharpe": 0.0,
+    "max_drawdown_pct": 0.0,
+    "win_rate_pct": 0.0,
+    "profit_factor": 1.0
+  }
+}

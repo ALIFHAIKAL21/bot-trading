@@ -1,0 +1,10 @@
+{
+  "BTC/USDT_5m": {
+    "symbol": "BTC/USDT",
+    "timeframe": "5m",
+    "source": "ccxt_binance_vision",
+    "cache_file": "data\\cache\\BTC_USDT_5m.parquet",
+    "cache_sha256": "768d37b40e6a2e0caba54c1851aba5b6b88564a55250d3b2c368c7c835cec7a4",
+    "fetched_at_utc": "2026-09-21T20:32:48.617982+00:00"
+  }
+}

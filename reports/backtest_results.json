@@ -1,0 +1,100 @@
+{
+  "market": {
+    "symbol": "BTC/USDT",
+    "bars": 3525
+  },
+  "strategies": {
+    "meta_model_stacked": {
+      "cagr": 0.0,
+      "annualized_vol": 0.0,
+      "sharpe_ratio": 0.0,
+      "sortino_ratio": 0.0,
+      "calmar_ratio": 0.0,
+      "max_drawdown": 0.0,
+      "win_rate": 0.0,
+      "profit_factor": 1.0,
+      "avg_exposure": 0.0,
+      "annual_turnover": 0.0,
+      "deflated_sharpe_ratio": 0.0,
+      "sharpe_95ci_low": 0.0,
+      "sharpe_95ci_high": 0.0
+    },
+    "simple_average_ensemble": {
+      "cagr": 0.0,
+      "annualized_vol": 0.0,
+      "sharpe_ratio": 0.0,
+      "sortino_ratio": 0.0,
+      "calmar_ratio": 0.0,
+      "max_drawdown": 0.0,
+      "win_rate": 0.0,
+      "profit_factor": 1.0,
+      "avg_exposure": 0.0,
+      "annual_turnover": 0.0
+    },
+    "best_single_lgbm": {
+      "cagr": 0.0041,
+      "annualized_vol": 0.0015,
+      "sharpe_ratio": 2.8239,
+      "sortino_ratio": 0.7847,
+      "calmar_ratio": 14.1116,
+      "max_drawdown": 0.0003,
+      "win_rate": 0.6429,
+      "profit_factor": 2.2414,
+      "avg_exposure": 0.0003,
+      "annual_turnover": 0.9056
+    },
+    "time_shuffled_signal_baseline": {
+      "cagr": 0.0,
+      "annualized_vol": 0.0,
+      "sharpe_ratio": 0.0,
+      "sortino_ratio": 0.0,
+      "calmar_ratio": 0.0,
+      "max_drawdown": 0.0,
+      "win_rate": 0.0,
+      "profit_factor": 1.0,
+      "avg_exposure": 0.0,
+      "annual_turnover": 0.0
+    },
+    "buy_and_hold_benchmark": {
+      "cagr": -0.5793,
+      "annualized_vol": 0.4624,
+      "sharpe_ratio": -1.6412,
+      "sortino_ratio": -2.1532,
+      "calmar_ratio": -1.5946,
+      "max_drawdown": 0.3633,
+      "win_rate": 0.4952,
+      "profit_factor": 0.9485,
+      "avg_exposure": 0.9997,
+      "annual_turnover": 2.4851
+    },
+    "monte_carlo_random_baseline": {
+      "mc_sharpe_mean": -22.3224,
+      "mc_sharpe_95th": -20.2181,
+      "mc_sharpe_max": -19.2418,
+      "mc_cagr_mean": -0.9044,
+      "mc_cagr_95th": -0.8835
+    }
+  },
+  "ablation_table": {
+    "minus_model_a_chronos": {
+      "sharpe_ratio": 0.0,
+      "cagr": 0.0,
+      "max_drawdown": 0.0
+    },
+    "minus_model_b_lgbm": {
+      "sharpe_ratio": 0.0,
+      "cagr": 0.0,
+      "max_drawdown": 0.0
+    },
+    "minus_model_c_deep": {
+      "sharpe_ratio": 0.0,
+      "cagr": 0.0,
+      "max_drawdown": 0.0
+    },
+    "minus_model_e_regime": {
+      "sharpe_ratio": 0.46,
+      "cagr": 0.0001,
+      "max_drawdown": 0.0001
+    }
+  }
+}

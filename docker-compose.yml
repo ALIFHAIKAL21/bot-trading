@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  trading-bot:
+    build: .
+    container_name: quant_trading_bot
+    restart: always
+    environment:
+      - CONFIRM_LIVE=NO
+      - BINANCE_USE_TESTNET=true
+      - API_TOKEN=quant_secret_token_change_me
+    ports:
+      - "8502:8502"  # Streamlit Dashboard
+      - "8000:8000"  # FastAPI Service
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"

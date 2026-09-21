@@ -1,0 +1,147 @@
+{
+  "1h": {
+    "timeframe": "1h",
+    "bars": 23580,
+    "years": 2.69,
+    "raw": {
+      "trades": 2003,
+      "total_turnover": 35.11,
+      "annualized_turnover": 13.04,
+      "total_costs_dollars": 0.06,
+      "cum_return_pct": 2.24,
+      "annualized_return_pct": 0.82,
+      "sharpe_ratio": 2.093,
+      "sortino_ratio": 1.623,
+      "max_drawdown_pct": 0.17,
+      "win_rate_pct": 52.01,
+      "profit_factor": 1.3
+    },
+    "controlled": {
+      "trades": 188,
+      "total_turnover": 6.31,
+      "annualized_turnover": 2.34,
+      "total_costs_dollars": 0.01,
+      "cum_return_pct": 3.5,
+      "annualized_return_pct": 1.29,
+      "sharpe_ratio": 4.355,
+      "sortino_ratio": 2.206,
+      "max_drawdown_pct": 0.08,
+      "win_rate_pct": 61.36,
+      "profit_factor": 2.628,
+      "reason_counts": {
+        "below_entry_threshold": 22374,
+        "dust_rebalance_suppressed": 238,
+        "hysteresis_band_hold": 216,
+        "edge_below_cost_hurdle": 188,
+        "cooldown_active": 180,
+        "crisis_regime_blocked": 176,
+        "entry_hurdle_passed": 90,
+        "exit_threshold_triggered": 64,
+        "crisis_regime_exit": 26,
+        "min_holding_bars_active": 20,
+        "rebalance_position_adjusted": 8
+      }
+    },
+    "comparison": {
+      "trade_reduction_pct": 90.61,
+      "turnover_reduction_pct": 82.03,
+      "cost_savings_dollars": 0.05,
+      "sharpe_improvement": 2.262
+    }
+  },
+  "4h": {
+    "timeframe": "4h",
+    "bars": 5895,
+    "years": 2.69,
+    "raw": {
+      "trades": 602,
+      "total_turnover": 17.76,
+      "annualized_turnover": 6.6,
+      "total_costs_dollars": 0.03,
+      "cum_return_pct": 6.32,
+      "annualized_return_pct": 9.54,
+      "sharpe_ratio": 9.617,
+      "sortino_ratio": 13.483,
+      "max_drawdown_pct": 0.08,
+      "win_rate_pct": 73.66,
+      "profit_factor": 3.6
+    },
+    "controlled": {
+      "trades": 85,
+      "total_turnover": 2.88,
+      "annualized_turnover": 1.07,
+      "total_costs_dollars": 0.01,
+      "cum_return_pct": 2.21,
+      "annualized_return_pct": 3.3,
+      "sharpe_ratio": 5.177,
+      "sortino_ratio": 3.08,
+      "max_drawdown_pct": 0.1,
+      "win_rate_pct": 77.01,
+      "profit_factor": 4.69,
+      "reason_counts": {
+        "below_entry_threshold": 5609,
+        "edge_below_cost_hurdle": 79,
+        "entry_hurdle_passed": 41,
+        "cooldown_active": 41,
+        "crisis_regime_blocked": 38,
+        "exit_threshold_triggered": 21,
+        "crisis_regime_exit": 20,
+        "hysteresis_band_hold": 17,
+        "dust_rebalance_suppressed": 14,
+        "min_holding_bars_active": 12,
+        "rebalance_position_adjusted": 3
+      }
+    },
+    "comparison": {
+      "trade_reduction_pct": 85.88,
+      "turnover_reduction_pct": 83.76,
+      "cost_savings_dollars": 0.03,
+      "sharpe_improvement": -4.44
+    }
+  },
+  "1d": {
+    "timeframe": "1d",
+    "bars": 983,
+    "years": 2.69,
+    "raw": {
+      "trades": 74,
+      "total_turnover": 2.9,
+      "annualized_turnover": 1.08,
+      "total_costs_dollars": 0.01,
+      "cum_return_pct": 2.69,
+      "annualized_return_pct": 26.66,
+      "sharpe_ratio": 7.466,
+      "sortino_ratio": 10.196,
+      "max_drawdown_pct": 0.14,
+      "win_rate_pct": 74.36,
+      "profit_factor": 4.307
+    },
+    "controlled": {
+      "trades": 6,
+      "total_turnover": 0.15,
+      "annualized_turnover": 0.06,
+      "total_costs_dollars": 0.0,
+      "cum_return_pct": 0.55,
+      "annualized_return_pct": 5.0,
+      "sharpe_ratio": 4.945,
+      "sortino_ratio": 20.466,
+      "max_drawdown_pct": 0.01,
+      "win_rate_pct": 100.0,
+      "profit_factor": 30.1,
+      "reason_counts": {
+        "below_entry_threshold": 960,
+        "edge_below_cost_hurdle": 11,
+        "entry_hurdle_passed": 3,
+        "crisis_regime_exit": 3,
+        "cooldown_active": 3,
+        "crisis_regime_blocked": 3
+      }
+    },
+    "comparison": {
+      "trade_reduction_pct": 91.89,
+      "turnover_reduction_pct": 94.68,
+      "cost_savings_dollars": 0.01,
+      "sharpe_improvement": -2.521
+    }
+  }
+}

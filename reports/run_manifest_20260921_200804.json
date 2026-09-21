@@ -1,0 +1,27 @@
+{
+  "timestamp_utc": "2026-09-21T20:08:04.937854+00:00",
+  "execution_mode": "PAPER",
+  "git_commit": "unversioned_workspace",
+  "config_path": "config/config.yaml",
+  "config_sha256": "c32355dd14f2e0bf5cd173fa5cc835c25253a34dfde1af34a61902e9c4997ef4",
+  "system_seed": 42,
+  "python_version": "3.10.20",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "symbols": [
+    "BTC/USDT",
+    "ETH/USDT"
+  ],
+  "timeframe": "1h",
+  "history_days": 1095,
+  "primary_data_source": "binance",
+  "active_models": {
+    "model_a_chronos": "ENABLED",
+    "model_b_lightgbm": "ENABLED",
+    "model_c_deep": "ENABLED",
+    "model_d_sentiment": "GATE_ONLY",
+    "model_e_hmm": "ENABLED",
+    "meta_learner": "ENABLED (logistic_regression)"
+  },
+  "dataset_meta": {},
+  "extra_meta": {}
+}

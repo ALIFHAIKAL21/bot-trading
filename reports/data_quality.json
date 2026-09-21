@@ -1,0 +1,15 @@
+{
+  "BTC/USDT_5m": {
+    "symbol": "BTC/USDT",
+    "timeframe": "5m",
+    "total_bars": 2000,
+    "zero_volume_bars": 0,
+    "zero_volume_pct": 0.0,
+    "gap_filled_bars": 0,
+    "gap_filled_pct": 0.0,
+    "start_timestamp": "2026-09-14 20:35:00+00:00",
+    "end_timestamp": "2026-09-21 19:10:00+00:00",
+    "dtype_prices": "float64",
+    "dtype_volume": "float64"
+  }
+}
