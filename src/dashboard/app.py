@@ -499,12 +499,19 @@ elif selected_tab == "💼 Live Paper Trading":
                 if b_stat["is_running"]:
                     st.success(
                         f"🟢 **BOT AKTIF BERJALAN 24/7 DI SERVER CLOUD**\n\n"
-                        f"- Timeframe: **`{b_stat['timeframe']}`** | Pasangan: **`{b_stat['symbol']}`**\n"
-                        f"- Heartbeat: `{b_stat['last_heartbeat']}`\n"
-                        f"- Lilin Terakhir: `{b_stat['last_bar']}`\n"
+                        f"- Timeframe Aktif: **`{b_stat['timeframe']}`** | Pasangan: **`{b_stat['symbol']}`**\n"
+                        f"- Heartbeat Server: `{b_stat['last_heartbeat']}`\n"
+                        f"- Lilin Terakhir Dievaluasi: `{b_stat['last_bar']}`\n"
                         f"- Sinyal AI: P(Long) = `{b_stat['last_prob']:.3f}` | Aksi: `{b_stat['last_action']}`\n"
-                        f"- Status: `{b_stat['status_msg']}`"
+                        f"- Alasan Sinyal: `{b_stat['last_reason']}`\n"
+                        f"- Status Loop: `{b_stat['status_msg']}`"
                     )
+                    if b_stat["timeframe"] != selected_tf:
+                        st.info(f"💡 Anda memilih **{selected_tf}** di sebelah kiri sementara bot sedang jalan di **{b_stat['timeframe']}**.")
+                        if st.button(f"🔄 Beralih Sekarang ke Mode {selected_tf}", type="primary", use_container_width=True, key="btn_switch_tf"):
+                            b_ctrl.switch_timeframe(new_timeframe=selected_tf, symbol=selected_symbol)
+                            st.success(f"Bot dialihkan ke {selected_tf}!")
+                            st.rerun()
                 else:
                     st.info("⏸️ **STATUS: STANDBY (Mati)** — Klik 'Aktifkan Bot 24/7' untuk mulai trading otomatis.")
 
@@ -515,7 +522,7 @@ elif selected_tab == "💼 Live Paper Trading":
             st.rerun()
 
     with c_ref_toggle:
-        auto_refresh = st.checkbox("⏱️ Auto-Refresh (10s)", value=False, help="Otomatis memperbarui metrik setiap 10 detik")
+        auto_refresh = st.checkbox("⏱️ Auto-Refresh (10s)", value=b_stat["is_running"], help="Otomatis memperbarui metrik setiap 10 detik")
         if auto_refresh:
             if st_autorefresh is not None:
                 st_autorefresh(interval=10000, limit=None, key="live_autorefresh")
