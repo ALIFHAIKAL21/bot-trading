@@ -21,13 +21,16 @@ import pandas as pd
 from loguru import logger
 
 # Add repository root to path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from src.broker.broker import PaperBroker
 from src.data.loader import MarketDataLoader
 from src.features.feature_pipeline import FeaturePipeline
 from src.risk.risk_engine import RiskEngine
 from src.service.db import Database
+
 from src.utils.config import RiskConfig, load_config
 from src.utils.security import print_mode_banner
 
@@ -62,13 +65,13 @@ def run_scalp_replay(
     print(f"       5-MINUTE SCALPING DEMO REPLAY ({symbol}) - LAST {n_bars} BARS")
     print("=" * 80)
 
-    cfg = load_config("config/config.yaml")
-    cache_path = Path("data/cache") / f"{symbol.replace('/', '_')}_5m.parquet"
+    cfg = load_config(str(ROOT_DIR / "config" / "config.yaml"))
+    cache_path = ROOT_DIR / "data" / "cache" / f"{symbol.replace('/', '_')}_5m.parquet"
 
     # Ingest 5m data if not cached or small
     if not cache_path.exists():
         logger.info(f"Downloading recent 5m market data for {symbol}...")
-        loader = MarketDataLoader(cache_dir="data/cache")
+        loader = MarketDataLoader(cache_dir=str(ROOT_DIR / "data" / "cache"))
         df_raw = loader.load_or_fetch(symbol, timeframe="5m", history_days=7)
     else:
         df_raw = pd.read_parquet(cache_path)
@@ -82,9 +85,10 @@ def run_scalp_replay(
     df_eval = df_feat.iloc[-n_bars:].copy()
 
     # Load trained models
-    models_dir = Path("models_store")
+    models_dir = ROOT_DIR / "models_store"
     lgbm_model = joblib.load(models_dir / "model_b_lgbm.joblib")
     hmm_model = joblib.load(models_dir / "model_e_hmm.joblib") if (models_dir / "model_e_hmm.joblib").exists() else None
+
 
     # Compute tabular direction probabilities
     probs = lgbm_model.predict_proba(df_eval[feature_cols])
@@ -235,17 +239,18 @@ def run_scalp_live(symbol: str = "BTC/USDT", poll_interval: int = 10):
     print(f"       Poll Interval: {poll_interval}s | Press Ctrl+C to stop")
     print("=" * 80)
 
-    cfg = load_config("config/config.yaml")
-    db = Database(cfg.service.db_path)
+    cfg = load_config(str(ROOT_DIR / "config" / "config.yaml"))
+    db = Database(str(ROOT_DIR / cfg.service.db_path))
     broker = PaperBroker(initial_capital=10000.0, taker_fee=0.0010, slippage_bps=0.0005)
     scalp_risk = create_scalp_risk_config()
     risk_engine = RiskEngine(scalp_risk)
-    loader = MarketDataLoader(cache_dir="data/cache")
+    loader = MarketDataLoader(cache_dir=str(ROOT_DIR / "data" / "cache"))
     pipeline = FeaturePipeline(cfg.features)
 
-    models_dir = Path("models_store")
+    models_dir = ROOT_DIR / "models_store"
     lgbm_model = joblib.load(models_dir / "model_b_lgbm.joblib")
     hmm_model = joblib.load(models_dir / "model_e_hmm.joblib") if (models_dir / "model_e_hmm.joblib").exists() else None
+
 
     logger.info("5m Scalping Daemon initialized. Listening for newly closed 5m candles...")
 

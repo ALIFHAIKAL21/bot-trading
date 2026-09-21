@@ -2,8 +2,15 @@
 
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+# Ensure repository root is in sys.path for Streamlit Cloud and subfolder execution
+root_dir = Path(__file__).resolve().parent.parent.parent
+if str(root_dir) not in sys.path:
+    sys.path.insert(0, str(root_dir))
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -13,6 +20,7 @@ import streamlit as st
 from src.service.db import Database
 from src.utils.config import load_config
 from src.utils.security import determine_execution_mode
+
 
 # Page setup
 st.set_page_config(
@@ -73,14 +81,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Load config and database
-cfg = load_config("config/config.yaml")
-db = Database(cfg.service.db_path)
-reports_dir = Path("reports")
-cache_dir = Path("data/cache")
+# Load config and database anchored to root_dir
+config_path = root_dir / "config" / "config.yaml"
+cfg = load_config(str(config_path) if config_path.exists() else "config/config.yaml")
+db_path = root_dir / cfg.service.db_path
+db = Database(str(db_path))
+reports_dir = root_dir / "reports"
+cache_dir = root_dir / "data" / "cache"
 
 # Determine mode and safety state using canonical security helper
 mode_name = determine_execution_mode(cfg)
+
 
 
 import threading
@@ -545,8 +556,9 @@ elif selected_tab == "⚙️ Config & Audit":
         st.json(manifest)
 
     st.subheader("Active YAML Configuration")
-    config_file = Path("config/config.yaml")
+    config_file = root_dir / "config" / "config.yaml"
     if config_file.exists():
+
         with open(config_file, "r") as f:
             raw_yaml = f.read()
         st.code(raw_yaml, language="yaml")
