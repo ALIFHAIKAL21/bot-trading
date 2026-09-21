@@ -27,8 +27,10 @@ from src.utils.config import RiskConfig, load_config
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
 
-def get_risk_config_for_timeframe(timeframe: str = "5m") -> RiskConfig:
-    """Return calibrated RiskConfig for 1m, 5m, or 1h."""
+def get_risk_config_for_timeframe(timeframe: str = "5m", symbol: str = "BTC/USDT") -> RiskConfig:
+    """Return calibrated RiskConfig for 1m, 5m, or 1h tailored for Crypto or Gold (XAU/USD)."""
+    is_gold = symbol.upper() in ("XAU/USD", "XAUUSD", "GOLD", "PAXG/USDT")
+
     if timeframe == "1m":
         return RiskConfig(
             entry_threshold=0.515,
@@ -36,14 +38,14 @@ def get_risk_config_for_timeframe(timeframe: str = "5m") -> RiskConfig:
             min_holding_bars=3,            # 3 minutes
             cooldown_bars=1,               # 1 minute
             max_daily_trades=50,
-            round_trip_cost=0.0020,        # 20 bps
+            round_trip_cost=0.0015 if is_gold else 0.0020,
             expected_edge_hurdle_multiplier=1.0,
             trade_horizon_bars=5,          # 5 minutes
-            target_annual_vol=0.35,
+            target_annual_vol=0.15 if is_gold else 0.35,
             kelly_fraction=0.30,
             max_position_pct=0.35,
             dust_rebalance_threshold=0.02,
-            hard_stop_loss_pct=0.015,       # 1.5% scalping SL
+            hard_stop_loss_pct=0.008 if is_gold else 0.015,  # 0.8% for Gold vs 1.5% for BTC
         )
     elif timeframe == "5m":
         return RiskConfig(
@@ -52,14 +54,14 @@ def get_risk_config_for_timeframe(timeframe: str = "5m") -> RiskConfig:
             min_holding_bars=2,            # 10 minutes
             cooldown_bars=1,               # 5 minutes
             max_daily_trades=24,
-            round_trip_cost=0.0025,        # 25 bps
+            round_trip_cost=0.0020 if is_gold else 0.0025,
             expected_edge_hurdle_multiplier=1.0,
             trade_horizon_bars=6,          # 30 minutes
-            target_annual_vol=0.30,
+            target_annual_vol=0.15 if is_gold else 0.30,
             kelly_fraction=0.35,
             max_position_pct=0.40,
             dust_rebalance_threshold=0.03,
-            hard_stop_loss_pct=0.02,        # 2% scalping SL
+            hard_stop_loss_pct=0.010 if is_gold else 0.02,   # 1.0% for Gold vs 2.0% for BTC
         )
     else:
         # 1h Swing
@@ -69,14 +71,14 @@ def get_risk_config_for_timeframe(timeframe: str = "5m") -> RiskConfig:
             min_holding_bars=3,            # 3 hours
             cooldown_bars=2,               # 2 hours
             max_daily_trades=6,
-            round_trip_cost=0.0030,        # 30 bps
+            round_trip_cost=0.0025 if is_gold else 0.0030,
             expected_edge_hurdle_multiplier=2.0,
             trade_horizon_bars=12,         # 12 hours
-            target_annual_vol=0.25,
+            target_annual_vol=0.12 if is_gold else 0.25,
             kelly_fraction=0.25,
             max_position_pct=0.40,
             dust_rebalance_threshold=0.05,
-            hard_stop_loss_pct=0.03,        # 3% swing SL
+            hard_stop_loss_pct=0.015 if is_gold else 0.03,   # 1.5% for Gold vs 3.0% for BTC
         )
 
 
@@ -161,7 +163,7 @@ class BotController:
             cfg = load_config(str(ROOT_DIR / "config" / "config.yaml"))
             db = Database(str(ROOT_DIR / cfg.service.db_path))
             broker = PaperBroker(initial_capital=10000.0, taker_fee=0.0010, slippage_bps=0.0005)
-            risk_cfg = get_risk_config_for_timeframe(self.timeframe)
+            risk_cfg = get_risk_config_for_timeframe(self.timeframe, self.symbol)
             risk_engine = RiskEngine(risk_cfg)
             loader = MarketDataLoader(cache_dir=str(ROOT_DIR / "data" / "cache"))
             pipeline = FeaturePipeline(cfg.features)
@@ -352,7 +354,7 @@ def run_interactive_replay(timeframe: str = "5m", symbol: str = "BTC/USDT", n_ba
             pass
 
     broker = PaperBroker(initial_capital=10000.0, taker_fee=0.0010, slippage_bps=0.0005)
-    risk_cfg = get_risk_config_for_timeframe(timeframe)
+    risk_cfg = get_risk_config_for_timeframe(timeframe, symbol)
     risk_engine = RiskEngine(risk_cfg)
 
     ann_factor = np.sqrt(525600.0 if timeframe == "1m" else (105120.0 if timeframe == "5m" else 8760.0))

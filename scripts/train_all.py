@@ -30,7 +30,7 @@ from src.utils.config import AppConfig, load_config
 from src.utils.security import determine_execution_mode, print_active_models_banner, print_mode_banner
 
 
-def train_pipeline(config_path: str = "config/config.yaml") -> Dict:
+def train_pipeline(config_path: str = "config/config.yaml", target_symbol: Optional[str] = None) -> Dict:
     """Execute end-to-end training pipeline across all models with purged CV and strict discipline."""
     cfg: AppConfig = load_config(config_path)
     models_dir = Path("models_store")
@@ -42,8 +42,9 @@ def train_pipeline(config_path: str = "config/config.yaml") -> Dict:
     print_mode_banner(exec_mode)
     print_active_models_banner(cfg, context="TRAINING")
 
+    primary_sym = target_symbol or cfg.market.symbols[0]
     logger.info("=" * 70)
-    logger.info("STARTING INSTITUTIONAL MULTI-MODEL QUANT TRAINING PIPELINE")
+    logger.info(f"STARTING INSTITUTIONAL MULTI-MODEL QUANT TRAINING PIPELINE FOR {primary_sym}")
     logger.info("=" * 70)
 
     # 1. Load Data
@@ -55,7 +56,6 @@ def train_pipeline(config_path: str = "config/config.yaml") -> Dict:
     feature_pipeline = FeaturePipeline(cfg.features)
     labeler = TripleBarrierLabeler(cfg.labels)
 
-    primary_sym = cfg.market.symbols[0]
     logger.info(f"Loading primary market dataset for {primary_sym}...")
     df_raw = loader.load_or_fetch(
         primary_sym, timeframe=cfg.market.timeframe, history_days=cfg.market.history_days
@@ -247,7 +247,8 @@ def train_pipeline(config_path: str = "config/config.yaml") -> Dict:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Train multi-model quant pipeline on target asset.")
     parser.add_argument("--config", type=str, default="config/config.yaml")
+    parser.add_argument("--symbol", type=str, default=None, help="Target asset symbol (e.g. XAU/USD, BTC/USDT)")
     args = parser.parse_args()
-    train_pipeline(args.config)
+    train_pipeline(args.config, target_symbol=args.symbol)

@@ -79,9 +79,11 @@ class MarketDataLoader:
         if exchange is None:
             raise RuntimeError("ccxt is not installed or unavailable.")
 
+        target_symbol = "PAXG/USDT" if symbol.upper() in ("XAU/USD", "XAUUSD", "GOLD") else symbol
+
         all_candles = []
         current_since = since_ms
-        logger.info(f"Fetching CCXT data for {symbol} ({timeframe}) starting from {since_ms}...")
+        logger.info(f"Fetching CCXT data for {symbol} (as {target_symbol}, {timeframe}) starting from {since_ms}...")
 
         batch_count = 0
         while True:
@@ -90,7 +92,7 @@ class MarketDataLoader:
             while retries < max_retries:
                 try:
                     batch = exchange.fetch_ohlcv(
-                        symbol, timeframe=timeframe, since=current_since, limit=limit
+                        target_symbol, timeframe=timeframe, since=current_since, limit=limit
                     )
                     break
                 except Exception as e:
@@ -156,7 +158,9 @@ class MarketDataLoader:
             raise RuntimeError("yfinance is not installed or unavailable.")
 
         yf_symbol = symbol
-        if "/" in symbol:
+        if symbol.upper() in ("XAU/USD", "XAUUSD", "GOLD"):
+            yf_symbol = "GC=F"
+        elif "/" in symbol:
             base, quote = symbol.split("/")
             if quote == "USDT":
                 yf_symbol = f"{base}-USD"

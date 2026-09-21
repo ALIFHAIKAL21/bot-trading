@@ -8,7 +8,7 @@ system:
 market:
   symbols:
     - "BTC/USDT"
-    - "PAXG/USDT"  # Paxos Gold (XAU/USD Gold Spot backing 1:1)
+    - "XAU/USD"  # Gold Spot / USD
     - "ETH/USDT"
   equity_symbols:
     - "BBCA.JK"
