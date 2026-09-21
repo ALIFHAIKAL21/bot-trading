@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+torch = pytest.importorskip("torch")
+
 from src.models.deep_sequence_model import DeepSequenceModel, MultiTaskSequenceNetwork, RevIN
 
 

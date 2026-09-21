@@ -1,0 +1,6 @@
+# Extended Deep Learning Dependencies (For Offline Model A Chronos & Model C Research)
+-r requirements.txt
+torch>=2.1.0
+transformers>=4.36.0
+huggingface_hub>=0.20.0
+accelerate>=0.26.0
