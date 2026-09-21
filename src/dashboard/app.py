@@ -17,9 +17,15 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.service.bot_controller import BotController, run_interactive_replay
 from src.service.db import Database
 from src.utils.config import load_config
 from src.utils.security import determine_execution_mode
+
+try:
+    from streamlit_autorefresh import st_autorefresh
+except ImportError:
+    st_autorefresh = None
 
 
 # Page setup
@@ -92,18 +98,6 @@ cache_dir = root_dir / "data" / "cache"
 # Determine mode and safety state using canonical security helper
 mode_name = determine_execution_mode(cfg)
 
-
-
-import threading
-
-@st.cache_resource
-def start_embedded_background_scalper():
-    """Run 5-minute scalper daemon in a background thread inside Streamlit server."""
-    from scripts.test_scalp_5m import run_scalp_live
-    t = threading.Thread(target=run_scalp_live, kwargs={"symbol": "BTC/USDT", "poll_interval": 15}, daemon=True)
-    t.start()
-    return t
-
 # Sidebar navigation & Status
 st.sidebar.title("⚡ Quant Research MVP")
 st.sidebar.caption(f"Environment: **{mode_name}** | Symbol: **{cfg.market.symbols[0]}**")
@@ -126,16 +120,29 @@ st.sidebar.markdown(
 )
 st.sidebar.caption("Sealed evaluation on locked test set demonstrated lack of statistical edge after costs.")
 
-# 24/7 Cloud Background Scalper Toggle
+# 24/7 Cloud Background Scalper Toggle & Controller
+bot_ctrl = BotController()
+bot_status = bot_ctrl.get_status()
+
 st.sidebar.markdown("---")
-st.sidebar.subheader("🤖 24/7 Cloud Scalper")
-auto_scalp_env = os.getenv("STREAMLIT_AUTO_SCALP", "false").lower() == "true"
-auto_scalp = st.sidebar.checkbox("Run 5m Scalper in Background", value=auto_scalp_env, help="Activates automated 5m trading listener inside Streamlit server")
-if auto_scalp:
-    thread = start_embedded_background_scalper()
-    st.sidebar.success("🟢 24/7 Scalper: ACTIVE")
+st.sidebar.subheader("🤖 24/7 Cloud Engine")
+if bot_status["is_running"]:
+    st.sidebar.success(f"🟢 **STATUS: AKTIF (24/7)**\n\n- Mode: `{bot_status['timeframe']}`\n- Pair: `{bot_status['symbol']}`\n- Heartbeat: `{bot_status['last_heartbeat']}`")
+    if st.sidebar.button("⏹️ Hentikan Bot", key="side_stop_btn", use_container_width=True):
+        bot_ctrl.stop()
+        st.rerun()
 else:
-    st.sidebar.info("⏸️ Scalper: STANDBY")
+    st.sidebar.info("⏸️ **STATUS: STANDBY (Idle)**")
+    side_tf = st.sidebar.selectbox(
+        "Pilih Timeframe Bot:",
+        ["5m (Scalping Standar)", "1m (Ultra-Fast Scalp)", "1h (Swing Trading)"],
+        index=0,
+        key="side_tf_select",
+    )
+    side_tf_code = side_tf.split()[0]
+    if st.sidebar.button("▶️ Aktifkan 24/7 Bot", type="primary", key="side_start_btn", use_container_width=True):
+        bot_ctrl.start(timeframe=side_tf_code, symbol=cfg.market.symbols[0])
+        st.rerun()
 
 st.sidebar.markdown("---")
 
@@ -424,12 +431,101 @@ elif selected_tab == "📈 Market Data & Features":
 # TAB 4: LIVE PAPER TRADING
 # -------------------------------------------------------------
 elif selected_tab == "💼 Live Paper Trading":
-    st.header("💼 Live Paper Trading & Real-Time Scalper")
+    st.header("💼 Live Paper Trading & Interactive Simulation Hub")
 
-    # Top Action Bar: Refresh button & Live Status
-    c_btn, c_stat = st.columns([1, 4])
-    with c_btn:
-        if st.button("🔄 Refresh Data", width="stretch"):
+    # -----------------------------------------------------------------
+    # PUSAT KENDALI SIMULASI & BOT (CLICK-BASED UI)
+    # -----------------------------------------------------------------
+    with st.expander("🎛️ **PUSAT KENDALI SIMULASI & BOT (KLIK DISINI UNTUK KONTROL)**", expanded=True):
+        st.markdown(
+            "Pilih mode strategi dan jalankan simulasi instan atau aktifkan bot 24/7 di cloud server tanpa terminal!"
+        )
+
+        hub_col1, hub_col2 = st.columns([1, 1.2])
+
+        with hub_col1:
+            st.markdown("##### ⚙️ 1. Pilihan Strategi & Timeframe")
+            tf_selection = st.radio(
+                "Pilih Kecepatan & Horizon:",
+                [
+                    "⚡ Scalping 1m (Ultra-Fast) — Lilin 1 menit, SL ketat 1.5%, hold 3-5 candle",
+                    "🚀 Scalping 5m (Standar) — Lilin 5 menit, SL 2.0%, hold 10-30 menit",
+                    "🌊 Swing 1h (Multi-Hour) — Lilin 1 jam, SL 3.0%, hold 3-12 jam",
+                ],
+                index=1,
+                key="hub_tf_radio",
+            )
+            selected_tf = "1m" if "1m" in tf_selection else ("5m" if "5m" in tf_selection else "1h")
+            selected_symbol = st.selectbox("Pilih Pasangan Aset:", cfg.market.symbols, key="hub_symbol_select")
+
+        with hub_col2:
+            st.markdown("##### 🚀 2. Jalankan Aksi")
+            action_tab_sim, action_tab_live = st.tabs(["⚡ Jalankan Simulasi Instan", "🤖 Bot 24/7 Cloud (Nonstop)"])
+
+            with action_tab_sim:
+                st.caption("Replay lilin harga nyata terbaru untuk melihat order beli/jual dan return secara instan.")
+                n_bars = st.slider("Jumlah Lilin untuk Simulasi:", min_value=50, max_value=500, value=200, step=50, key="hub_slider_bars")
+                if st.button("⚡ Mulai Simulasi Replay Sekarang", type="primary", use_container_width=True, key="hub_btn_sim"):
+                    with st.spinner(f"Sedang mengunduh data lilin nyata dan menjalankan simulasi {selected_tf} pada {selected_symbol}..."):
+                        sim_res = run_interactive_replay(timeframe=selected_tf, symbol=selected_symbol, n_bars=n_bars)
+                    if "error" in sim_res:
+                        st.error(f"Gagal: {sim_res['error']}")
+                    else:
+                        st.success(
+                            f"✅ **Simulasi Selesai!** Lilin: {sim_res['bars']} | "
+                            f"Order: **{sim_res['trades_count']} transaksi** | "
+                            f"Return: **{sim_res['return_pct']:+.2f}%** | "
+                            f"Saldo: **${sim_res['final_equity']:,.2f}**"
+                        )
+                        st.rerun()
+
+            with action_tab_live:
+                st.caption("Jalankan bot trading otomatis 24/7 di server cloud Streamlit (laptop bebas dimatikan).")
+                b_ctrl = BotController()
+                b_stat = b_ctrl.get_status()
+
+                col_btn_start, col_btn_stop = st.columns(2)
+                with col_btn_start:
+                    if st.button("▶️ Aktifkan Bot 24/7", type="primary", use_container_width=True, disabled=b_stat["is_running"], key="hub_btn_start_live"):
+                        b_ctrl.start(timeframe=selected_tf, symbol=selected_symbol)
+                        st.success(f"Bot 24/7 berhasil diaktifkan pada timeframe {selected_tf}!")
+                        st.rerun()
+                with col_btn_stop:
+                    if st.button("⏹️ Hentikan Bot", use_container_width=True, disabled=not b_stat["is_running"], key="hub_btn_stop_live"):
+                        b_ctrl.stop()
+                        st.warning("Bot 24/7 dihentikan.")
+                        st.rerun()
+
+                if b_stat["is_running"]:
+                    st.success(
+                        f"🟢 **BOT AKTIF BERJALAN 24/7 DI SERVER CLOUD**\n\n"
+                        f"- Timeframe: **`{b_stat['timeframe']}`** | Pasangan: **`{b_stat['symbol']}`**\n"
+                        f"- Heartbeat: `{b_stat['last_heartbeat']}`\n"
+                        f"- Lilin Terakhir: `{b_stat['last_bar']}`\n"
+                        f"- Sinyal AI: P(Long) = `{b_stat['last_prob']:.3f}` | Aksi: `{b_stat['last_action']}`\n"
+                        f"- Status: `{b_stat['status_msg']}`"
+                    )
+                else:
+                    st.info("⏸️ **STATUS: STANDBY (Mati)** — Klik 'Aktifkan Bot 24/7' untuk mulai trading otomatis.")
+
+    # Top Action Bar: Refresh, Auto-refresh, Reset & Live Status
+    c_ref_btn, c_ref_toggle, c_reset_btn, c_stat = st.columns([1, 1.2, 1, 3])
+    with c_ref_btn:
+        if st.button("🔄 Refresh Data", use_container_width=True):
+            st.rerun()
+
+    with c_ref_toggle:
+        auto_refresh = st.checkbox("⏱️ Auto-Refresh (10s)", value=False, help="Otomatis memperbarui metrik setiap 10 detik")
+        if auto_refresh:
+            if st_autorefresh is not None:
+                st_autorefresh(interval=10000, limit=None, key="live_autorefresh")
+            else:
+                time.sleep(10)
+                st.rerun()
+
+    with c_reset_btn:
+        if st.button("🗑️ Reset Data", use_container_width=True, help="Hapus riwayat simulasi/order"):
+            db.clear_all()
             st.rerun()
 
     # Query database
@@ -444,8 +540,15 @@ elif selected_tab == "💼 Live Paper Trading":
         current_cash = float(history[-1].get("cash", 10000.0))
 
     # Live status description
+    b_ctrl = BotController()
+    b_stat = b_ctrl.get_status()
     with c_stat:
-        if signals:
+        if b_stat["is_running"]:
+            st.success(
+                f"🟢 **Bot 24/7 Aktif ({b_stat['timeframe']})** | Lilin: `{b_stat['last_bar']}` | "
+                f"P(Long): **`{b_stat['last_prob']:.3f}`** | Aksi: **`{b_stat['last_action']}`**"
+            )
+        elif signals:
             last_sig = signals[0]
             raw_data = last_sig.get("raw_data")
             if isinstance(raw_data, str):
@@ -460,12 +563,13 @@ elif selected_tab == "💼 Live Paper Trading":
             reason = raw_dict.get("decision_reason", "monitoring")
             p_val = last_sig.get("prob_long", 0.5)
             ts_val = last_sig.get("bar_timestamp", "")[:19]
+            tf_used = raw_dict.get("timeframe", "5m")
             st.info(
-                f"🟢 **Scalper Active & Listening** | Last Evaluated Bar: `{ts_val} UTC` | "
-                f"AI P(Long): **`{p_val:.3f}`** | Action: **`{action}`** | Reason: `{reason}`"
+                f"📡 **Sinyal Terakhir ({tf_used})** | `{ts_val} UTC` | "
+                f"P(Long): **`{p_val:.3f}`** | Aksi: **`{action}`** | Alasan: `{reason}`"
             )
         else:
-            st.info("🟢 **Scalper Initialized** | Waiting for first closed candle...")
+            st.info("🟢 **Sistem Siap** | Silakan jalankan Simulasi Instan atau Aktifkan Bot 24/7.")
 
     # Summary balances
     pos_val = current_equity - current_cash

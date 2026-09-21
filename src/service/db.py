@@ -290,3 +290,14 @@ class Database:
         except Exception as e:
             logger.error(f"Failed to record processed bar: {e}")
             return False
+
+    def clear_all(self):
+        """Clear all paper trading records to allow fresh simulation/testing."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM orders;")
+            cursor.execute("DELETE FROM signals;")
+            cursor.execute("DELETE FROM portfolio_snapshots;")
+            cursor.execute("DELETE FROM processed_bars;")
+            conn.commit()
+            logger.info("Database paper trading history wiped clean.")

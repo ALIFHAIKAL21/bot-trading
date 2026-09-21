@@ -33,6 +33,7 @@ python-dotenv>=1.0.0
 
 # Dashboard & Visualization
 streamlit>=1.31.0
+streamlit-autorefresh>=1.0.1
 plotly>=5.18.0
 
 # Logging, Testing, Utilities
