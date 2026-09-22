@@ -4,6 +4,7 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
+import time
 from pathlib import Path
 
 # Ensure repository root is in sys.path for Streamlit Cloud and subfolder execution
