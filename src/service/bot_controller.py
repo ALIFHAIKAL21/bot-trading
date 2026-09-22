@@ -131,7 +131,7 @@ class BotController:
             "last_reason": self.last_reason,
         }
 
-    def start(self, timeframe: str = "5m", symbol: str = "BTC/USDT", strategy_mode: str = "pro_sniper"):
+    def start(self, timeframe: str = "5m", symbol: str = "BTC/USDT", strategy_mode: str = "pro_sniper", *args, **kwargs):
         with self._lock:
             if self.is_running:
                 logger.info("Bot is already running.")
@@ -159,7 +159,7 @@ class BotController:
             logger.info("BotController signaling stop to worker thread.")
             return True
 
-    def switch_timeframe(self, new_timeframe: str, symbol: Optional[str] = None, strategy_mode: Optional[str] = None):
+    def switch_timeframe(self, new_timeframe: str, symbol: Optional[str] = None, strategy_mode: Optional[str] = None, *args, **kwargs):
         """Cleanly stop the current worker and restart with new timeframe and strategy mode."""
         with self._lock:
             self.should_stop = True

@@ -18,8 +18,11 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 import streamlit.components.v1 as components
+import importlib
 
 from src.data.loader import MarketDataLoader
+import src.service.bot_controller
+importlib.reload(src.service.bot_controller)
 from src.service.bot_controller import BotController, run_interactive_replay
 from src.service.db import Database
 from src.utils.config import load_config
