@@ -20,6 +20,7 @@ from loguru import logger
 from src.broker.broker import PaperBroker
 from src.data.loader import MarketDataLoader
 from src.features.feature_pipeline import FeaturePipeline
+from src.risk.pro_sniper import ProSniperEngine, SniperSignal
 from src.risk.risk_engine import RiskEngine
 from src.service.db import Database
 from src.utils.config import RiskConfig, load_config
@@ -100,27 +101,37 @@ class BotController:
         self.thread: Optional[threading.Thread] = None
         self.timeframe = "5m"
         self.symbol = "BTC/USDT"
+        self.strategy_mode = "pro_sniper"  # "pro_sniper" (Trader Kelas Kakap) vs "institutional"
         self.last_heartbeat = None
         self.last_status_msg = "Bot initialized (Idle)"
         self.last_bar_evaluated = None
         self.last_prob = 0.50
+        self.last_score = 0.0
+        self.take_profit_price = 0.0
+        self.stop_loss_price = 0.0
+        self.trailing_stage = 0
         self.last_action = "FLAT"
         self.last_reason = "Initialized"
 
     def get_status(self) -> Dict:
         return {
             "is_running": self.is_running,
+            "strategy_mode": getattr(self, "strategy_mode", "pro_sniper"),
             "timeframe": self.timeframe,
             "symbol": self.symbol,
             "last_heartbeat": self.last_heartbeat.strftime("%Y-%m-%d %H:%M:%S UTC") if self.last_heartbeat else "Never",
             "status_msg": self.last_status_msg,
             "last_bar": self.last_bar_evaluated or "None",
             "last_prob": self.last_prob,
+            "last_score": getattr(self, "last_score", 0.0),
+            "take_profit": getattr(self, "take_profit_price", 0.0),
+            "stop_loss": getattr(self, "stop_loss_price", 0.0),
+            "trailing_stage": getattr(self, "trailing_stage", 0),
             "last_action": self.last_action,
             "last_reason": self.last_reason,
         }
 
-    def start(self, timeframe: str = "5m", symbol: str = "BTC/USDT"):
+    def start(self, timeframe: str = "5m", symbol: str = "BTC/USDT", strategy_mode: str = "pro_sniper"):
         with self._lock:
             if self.is_running:
                 logger.info("Bot is already running.")
@@ -128,13 +139,15 @@ class BotController:
 
             self.timeframe = timeframe
             self.symbol = symbol
+            self.strategy_mode = strategy_mode
             self.should_stop = False
             self.is_running = True
             self.last_heartbeat = datetime.now(timezone.utc)
-            self.last_status_msg = f"Starting 24/7 {timeframe} worker for {symbol}..."
+            mode_desc = "Pro Sniper (Trader Kakap)" if strategy_mode == "pro_sniper" else "Institusional (Konservatif)"
+            self.last_status_msg = f"Starting 24/7 {timeframe} worker ({mode_desc}) for {symbol}..."
             self.thread = threading.Thread(target=self._worker_loop, daemon=True)
             self.thread.start()
-            logger.info(f"BotController started background thread for {symbol} ({timeframe}).")
+            logger.info(f"BotController started background thread for {symbol} ({timeframe}, {strategy_mode}).")
             return True
 
     def stop(self):
@@ -146,13 +159,14 @@ class BotController:
             logger.info("BotController signaling stop to worker thread.")
             return True
 
-    def switch_timeframe(self, new_timeframe: str, symbol: Optional[str] = None):
-        """Cleanly stop the current worker and restart with new timeframe."""
+    def switch_timeframe(self, new_timeframe: str, symbol: Optional[str] = None, strategy_mode: Optional[str] = None):
+        """Cleanly stop the current worker and restart with new timeframe and strategy mode."""
         with self._lock:
             self.should_stop = True
             self.is_running = False
         time.sleep(0.5)
-        return self.start(timeframe=new_timeframe, symbol=symbol or self.symbol)
+        strat = strategy_mode or getattr(self, "strategy_mode", "pro_sniper")
+        return self.start(timeframe=new_timeframe, symbol=symbol or self.symbol, strategy_mode=strat)
 
     def _worker_loop(self):
         fatal_e = None
@@ -167,6 +181,16 @@ class BotController:
             risk_engine = RiskEngine(risk_cfg)
             loader = MarketDataLoader(cache_dir=str(ROOT_DIR / "data" / "cache"))
             pipeline = FeaturePipeline(cfg.features)
+
+            is_pro_sniper = getattr(self, "strategy_mode", "pro_sniper") == "pro_sniper"
+            sniper_engine = ProSniperEngine(
+                tp_atr_mult=1.8,
+                sl_atr_mult=1.2,
+                breakeven_atr_trigger=0.7,
+                profit_lock_atr_trigger=1.2,
+                min_confluence_score=60.0 if self.timeframe == "1m" else 65.0,
+                cooldown_bars=2,
+            ) if is_pro_sniper else None
 
             models_dir = ROOT_DIR / "models_store"
             lgbm_model = joblib.load(models_dir / "model_b_lgbm.joblib")
@@ -240,18 +264,42 @@ class BotController:
                         except Exception:
                             pass
 
-                    decision = risk_engine.decide_step(
-                        prob_long=p_long,
-                        current_vol_annual=vol_annual,
-                        bar_volatility=vol_bar,
-                        regime_probs=regime_probs,
-                        bar_timestamp=eval_ts,
-                        current_price=current_price,
-                    )
+                    # Strategy evaluation: Pro Sniper vs Institutional
+                    if is_pro_sniper and sniper_engine is not None:
+                        sig = sniper_engine.evaluate_step(
+                            df=df_raw,
+                            eval_idx=eval_idx,
+                            prob_long=p_long,
+                            current_price=current_price,
+                            bar_timestamp=eval_ts,
+                        )
+                        action = sig.action
+                        target_weight = sig.target_weight
+                        decision_reason = sig.reason
+                        self.last_score = sig.confluence_score
+                        self.take_profit_price = sig.take_profit or 0.0
+                        self.stop_loss_price = sig.stop_loss or 0.0
+                        self.trailing_stage = sig.trailing_stage
+                        expected_edge = 0.015
+                        hurdle_cost = 0.002
+                    else:
+                        decision = risk_engine.decide_step(
+                            prob_long=p_long,
+                            current_vol_annual=vol_annual,
+                            bar_volatility=vol_bar,
+                            regime_probs=regime_probs,
+                            bar_timestamp=eval_ts,
+                            current_price=current_price,
+                        )
+                        action = decision.action
+                        target_weight = decision.target_position
+                        decision_reason = decision.reason
+                        expected_edge = decision.expected_edge
+                        hurdle_cost = decision.hurdle_cost
 
-                    self.last_action = decision.action
-                    self.last_reason = decision.reason
-                    self.last_status_msg = f"Evaluated {eval_ts[:19]} | Action: {decision.action} | P(Long): {p_long:.3f}"
+                    self.last_action = action
+                    self.last_reason = decision_reason
+                    self.last_status_msg = f"Evaluated {eval_ts[:19]} | Action: {action} | P(Long): {p_long:.3f} | {decision_reason}"
 
                     # Record signal
                     db.record_signal(
@@ -262,20 +310,25 @@ class BotController:
                         regime_id=regime_id,
                         sentiment_score=0.0,
                         raw_data={
-                            "action": decision.action,
-                            "target_size": decision.target_position,
-                            "decision_reason": decision.reason,
-                            "expected_edge": decision.expected_edge,
-                            "hurdle_cost": decision.hurdle_cost,
+                            "action": action,
+                            "target_size": target_weight,
+                            "decision_reason": decision_reason,
+                            "expected_edge": expected_edge,
+                            "hurdle_cost": hurdle_cost,
                             "timeframe": self.timeframe,
+                            "strategy_mode": getattr(self, "strategy_mode", "pro_sniper"),
+                            "confluence_score": getattr(self, "last_score", 0.0),
+                            "take_profit": getattr(self, "take_profit_price", 0.0),
+                            "stop_loss": getattr(self, "stop_loss_price", 0.0),
+                            "trailing_stage": getattr(self, "trailing_stage", 0),
                         },
                     )
 
                     # Execute order if action is BUY or SELL
-                    if decision.action in ("BUY", "SELL"):
+                    if action in ("BUY", "SELL"):
                         trade = broker.execute_rebalance(
                             symbol=self.symbol,
-                            target_weight=decision.target_position,
+                            target_weight=target_weight,
                             current_price=current_price,
                             bar_timestamp=eval_ts,
                         )
@@ -303,9 +356,9 @@ class BotController:
                     db.record_processed_bar(
                         symbol=self.symbol,
                         bar_timestamp=eval_ts,
-                        action=decision.action,
-                        decision_reason=decision.reason,
-                        target_weight=decision.target_position,
+                        action=action,
+                        decision_reason=decision_reason,
+                        target_weight=target_weight,
                     )
 
                 except Exception as e:
@@ -324,7 +377,12 @@ class BotController:
             logger.info("Worker thread exited cleanly.")
 
 
-def run_interactive_replay(timeframe: str = "5m", symbol: str = "BTC/USDT", n_bars: int = 300) -> Dict:
+def run_interactive_replay(
+    timeframe: str = "5m",
+    symbol: str = "BTC/USDT",
+    n_bars: int = 300,
+    strategy_mode: str = "pro_sniper",
+) -> Dict:
     """Run an instant historical replay directly from the UI and return execution stats."""
     cfg = load_config(str(ROOT_DIR / "config" / "config.yaml"))
     db = Database(str(ROOT_DIR / cfg.service.db_path))
@@ -357,8 +415,20 @@ def run_interactive_replay(timeframe: str = "5m", symbol: str = "BTC/USDT", n_ba
     risk_cfg = get_risk_config_for_timeframe(timeframe, symbol)
     risk_engine = RiskEngine(risk_cfg)
 
+    # Pro Sniper Engine for trader mode
+    is_pro_sniper = (strategy_mode == "pro_sniper")
+    sniper_engine = ProSniperEngine(
+        tp_atr_mult=1.8,
+        sl_atr_mult=1.2,
+        breakeven_atr_trigger=0.7,
+        profit_lock_atr_trigger=1.2,
+        min_confluence_score=60.0 if timeframe == "1m" else 65.0,
+        cooldown_bars=2,
+    ) if is_pro_sniper else None
+
     ann_factor = np.sqrt(525600.0 if timeframe == "1m" else (105120.0 if timeframe == "5m" else 8760.0))
     trades_executed = []
+    last_buy_price = 0.0
 
     for i in range(len(df_eval)):
         row = df_eval.iloc[i]
@@ -375,14 +445,39 @@ def run_interactive_replay(timeframe: str = "5m", symbol: str = "BTC/USDT", n_ba
             regime_probs = np.array([r_row["regime_p0"], r_row["regime_p1"], r_row["regime_p2"]])
             regime_id = int(np.argmax(regime_probs))
 
-        decision = risk_engine.decide_step(
-            prob_long=p_long,
-            current_vol_annual=vol_annual,
-            bar_volatility=vol_bar,
-            regime_probs=regime_probs,
-            bar_timestamp=bar_ts,
-            current_price=current_price,
-        )
+        if is_pro_sniper and sniper_engine is not None:
+            sig = sniper_engine.evaluate_step(
+                df=df_raw,
+                eval_idx=len(df_raw) - n_bars + i,
+                prob_long=p_long,
+                current_price=current_price,
+                bar_timestamp=bar_ts,
+            )
+            action = sig.action
+            target_weight = sig.target_weight
+            decision_reason = sig.reason
+            expected_edge = 0.015
+            hurdle_cost = 0.002
+            confluence_score = sig.confluence_score
+            tp_px = sig.take_profit
+            sl_px = sig.stop_loss
+        else:
+            decision = risk_engine.decide_step(
+                prob_long=p_long,
+                current_vol_annual=vol_annual,
+                bar_volatility=vol_bar,
+                regime_probs=regime_probs,
+                bar_timestamp=bar_ts,
+                current_price=current_price,
+            )
+            action = decision.action
+            target_weight = decision.target_position
+            decision_reason = decision.reason
+            expected_edge = decision.expected_edge
+            hurdle_cost = decision.hurdle_cost
+            confluence_score = 0.0
+            tp_px = None
+            sl_px = None
 
         db.record_signal(
             symbol=symbol,
@@ -392,23 +487,36 @@ def run_interactive_replay(timeframe: str = "5m", symbol: str = "BTC/USDT", n_ba
             regime_id=regime_id,
             sentiment_score=0.0,
             raw_data={
-                "action": decision.action,
-                "target_size": decision.target_position,
-                "decision_reason": decision.reason,
-                "expected_edge": decision.expected_edge,
-                "hurdle_cost": decision.hurdle_cost,
+                "action": action,
+                "target_size": target_weight,
+                "decision_reason": decision_reason,
+                "expected_edge": expected_edge,
+                "hurdle_cost": hurdle_cost,
                 "timeframe": timeframe,
+                "strategy_mode": strategy_mode,
+                "confluence_score": confluence_score,
+                "take_profit": tp_px,
+                "stop_loss": sl_px,
             },
         )
 
-        if decision.action in ("BUY", "SELL"):
+        if action in ("BUY", "SELL"):
             trade = broker.execute_rebalance(
                 symbol=symbol,
-                target_weight=decision.target_position,
+                target_weight=target_weight,
                 current_price=current_price,
                 bar_timestamp=bar_ts,
             )
             if trade:
+                is_win = False
+                if trade["side"] == "BUY":
+                    last_buy_price = trade["price"]
+                elif trade["side"] == "SELL" and last_buy_price > 0:
+                    if trade["price"] >= last_buy_price * 1.0003:
+                        is_win = True
+
+                trade["is_win"] = is_win
+                trade["decision_reason"] = decision_reason
                 db.record_order(
                     symbol=symbol,
                     bar_timestamp=bar_ts,
@@ -432,17 +540,26 @@ def run_interactive_replay(timeframe: str = "5m", symbol: str = "BTC/USDT", n_ba
         db.record_processed_bar(
             symbol=symbol,
             bar_timestamp=bar_ts,
-            action=decision.action,
-            decision_reason=decision.reason,
-            target_weight=decision.target_position,
+            action=action,
+            decision_reason=decision_reason,
+            target_weight=target_weight,
         )
 
     final_bal = broker.get_balance()
+    sells = [t for t in trades_executed if t.get("side") == "SELL"]
+    wins = [t for t in sells if t.get("is_win", False)]
+    wr_pct = (len(wins) / len(sells) * 100.0) if sells else 0.0
+
     return {
         "trades_count": len(trades_executed),
+        "completed_trades": len(sells),
+        "wins": len(wins),
+        "losses": len(sells) - len(wins),
+        "win_rate": round(wr_pct, 1),
         "initial_capital": 10000.0,
         "final_equity": final_bal["equity"],
         "return_pct": (final_bal["equity"] / 10000.0 - 1.0) * 100.0,
         "timeframe": timeframe,
+        "strategy_mode": strategy_mode,
         "bars": len(df_eval),
     }

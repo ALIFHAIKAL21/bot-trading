@@ -331,12 +331,28 @@ bot_status = bot_ctrl.get_status()
 st.sidebar.markdown("---")
 st.sidebar.subheader("🤖 24/7 Cloud Engine")
 if bot_status["is_running"]:
-    st.sidebar.success(f"🟢 **STATUS: AKTIF (24/7)**\n\n- Mode: `{bot_status['timeframe']}`\n- Pair: `{bot_status['symbol']}`\n- Heartbeat: `{bot_status['last_heartbeat']}`")
+    strat_tag = "⚡ Pro Sniper (Trader Kakap)" if bot_status.get("strategy_mode") == "pro_sniper" else "🛡️ Institusional"
+    score_tag = f"\n- Radar Confluence: `{bot_status.get('last_score', 0)}/100`" if bot_status.get("strategy_mode") == "pro_sniper" else ""
+    st.sidebar.success(
+        f"🟢 **STATUS: AKTIF (24/7)**\n\n"
+        f"- Engine: **`{strat_tag}`**\n"
+        f"- Timeframe: `{bot_status['timeframe']}`\n"
+        f"- Pair: `{bot_status['symbol']}`"
+        f"{score_tag}\n"
+        f"- Heartbeat: `{bot_status['last_heartbeat']}`"
+    )
     if st.sidebar.button("⏹️ Hentikan Bot", key="side_stop_btn", use_container_width=True):
         bot_ctrl.stop()
         st.rerun()
 else:
     st.sidebar.info("⏸️ **STATUS: STANDBY (Idle)**")
+    side_strategy = st.sidebar.selectbox(
+        "Pilih Karakter Strategi:",
+        ["⚡ Pro Sniper (Trader Kakap)", "🛡️ Institusional (Konservatif)"],
+        index=0,
+        key="side_strat_select",
+    )
+    side_strat_code = "pro_sniper" if "Pro Sniper" in side_strategy else "institutional"
     side_tf = st.sidebar.selectbox(
         "Pilih Timeframe Bot:",
         ["5m (Scalping Standar)", "1m (Ultra-Fast Scalp)", "1h (Swing Trading)"],
@@ -345,7 +361,7 @@ else:
     )
     side_tf_code = side_tf.split()[0]
     if st.sidebar.button("▶️ Aktifkan 24/7 Bot", type="primary", key="side_start_btn", use_container_width=True):
-        bot_ctrl.start(timeframe=side_tf_code, symbol=cfg.market.symbols[0])
+        bot_ctrl.start(timeframe=side_tf_code, symbol=cfg.market.symbols[0], strategy_mode=side_strat_code)
         st.rerun()
 
 st.sidebar.markdown("---")
@@ -649,6 +665,17 @@ elif selected_tab == "💼 Live Paper Trading":
 
         with hub_col1:
             st.markdown("##### ⚙️ 1. Pilihan Strategi & Timeframe")
+            strategy_selection = st.radio(
+                "Pilih Karakter & Gaya Trading:",
+                [
+                    "⚡ Pro Institutional Sniper (Trader Kelas Kakap: Confluence 0-100, Trailing BE, Target WR ~70%, 10+ trade/hari)",
+                    "🛡️ Institusional Akademik (Konservatif: Ketat Cost-Hurdle, Jarang Open Posisi)",
+                ],
+                index=0,
+                key="hub_strat_radio",
+            )
+            selected_strat = "pro_sniper" if "Pro Institutional Sniper" in strategy_selection else "institutional"
+
             tf_selection = st.radio(
                 "Pilih Kecepatan & Horizon:",
                 [
@@ -670,14 +697,16 @@ elif selected_tab == "💼 Live Paper Trading":
                 st.caption("Replay lilin harga nyata terbaru untuk melihat order beli/jual dan return secara instan.")
                 n_bars = st.slider("Jumlah Lilin untuk Simulasi:", min_value=50, max_value=500, value=200, step=50, key="hub_slider_bars")
                 if st.button("⚡ Mulai Simulasi Replay Sekarang", type="primary", use_container_width=True, key="hub_btn_sim"):
-                    with st.spinner(f"Sedang mengunduh data lilin nyata dan menjalankan simulasi {selected_tf} pada {selected_symbol}..."):
-                        sim_res = run_interactive_replay(timeframe=selected_tf, symbol=selected_symbol, n_bars=n_bars)
+                    with st.spinner(f"Sedang mengunduh data lilin nyata dan menjalankan simulasi {selected_tf} ({selected_strat}) pada {selected_symbol}..."):
+                        sim_res = run_interactive_replay(timeframe=selected_tf, symbol=selected_symbol, n_bars=n_bars, strategy_mode=selected_strat)
                     if "error" in sim_res:
                         st.error(f"Gagal: {sim_res['error']}")
                     else:
+                        wr_display = f"{sim_res.get('win_rate', 0.0):.1f}% ({sim_res.get('wins', 0)}W / {sim_res.get('losses', 0)}L)" if 'win_rate' in sim_res else "-"
                         st.success(
                             f"✅ **Simulasi Selesai!** Lilin: {sim_res['bars']} | "
                             f"Order: **{sim_res['trades_count']} transaksi** | "
+                            f"Win Rate: **{wr_display}** | "
                             f"Return: **{sim_res['return_pct']:+.2f}%** | "
                             f"Saldo: **${sim_res['final_equity']:,.2f}**"
                         )
@@ -691,8 +720,8 @@ elif selected_tab == "💼 Live Paper Trading":
                 col_btn_start, col_btn_stop = st.columns(2)
                 with col_btn_start:
                     if st.button("▶️ Aktifkan Bot 24/7", type="primary", use_container_width=True, disabled=b_stat["is_running"], key="hub_btn_start_live"):
-                        b_ctrl.start(timeframe=selected_tf, symbol=selected_symbol)
-                        st.success(f"Bot 24/7 berhasil diaktifkan pada timeframe {selected_tf}!")
+                        b_ctrl.start(timeframe=selected_tf, symbol=selected_symbol, strategy_mode=selected_strat)
+                        st.success(f"Bot 24/7 ({selected_strat}) berhasil diaktifkan pada timeframe {selected_tf}!")
                         st.rerun()
                 with col_btn_stop:
                     if st.button("⏹️ Hentikan Bot", use_container_width=True, disabled=not b_stat["is_running"], key="hub_btn_stop_live"):
@@ -701,20 +730,29 @@ elif selected_tab == "💼 Live Paper Trading":
                         st.rerun()
 
                 if b_stat["is_running"]:
+                    strat_display = "⚡ Pro Sniper (Trader Kakap)" if b_stat.get("strategy_mode") == "pro_sniper" else "🛡️ Institusional Konservatif"
+                    tp_val = b_stat.get("take_profit")
+                    sl_val = b_stat.get("stop_loss")
+                    tp_display = f"${tp_val:,.2f}" if tp_val else "-"
+                    sl_display = f"${sl_val:,.2f}" if sl_val else "-"
                     st.success(
                         f"🟢 **BOT AKTIF BERJALAN 24/7 DI SERVER CLOUD**\n\n"
+                        f"- Strategi: **`{strat_display}`**\n"
                         f"- Timeframe Aktif: **`{b_stat['timeframe']}`** | Pasangan: **`{b_stat['symbol']}`**\n"
+                        f"- Confluence Radar Score: **`{b_stat.get('last_score', 0)}/100`**\n"
+                        f"- Target TP: **`{tp_display}`** | Stop Loss: **`{sl_display}`**\n"
+                        f"- Trailing Stage: **`{b_stat.get('trailing_stage', 'NONE')}`**\n"
                         f"- Heartbeat Server: `{b_stat['last_heartbeat']}`\n"
                         f"- Lilin Terakhir Dievaluasi: `{b_stat['last_bar']}`\n"
                         f"- Sinyal AI: P(Long) = `{b_stat['last_prob']:.3f}` | Aksi: `{b_stat['last_action']}`\n"
                         f"- Alasan Sinyal: `{b_stat['last_reason']}`\n"
                         f"- Status Loop: `{b_stat['status_msg']}`"
                     )
-                    if b_stat["timeframe"] != selected_tf:
-                        st.info(f"💡 Anda memilih **{selected_tf}** di sebelah kiri sementara bot sedang jalan di **{b_stat['timeframe']}**.")
-                        if st.button(f"🔄 Beralih Sekarang ke Mode {selected_tf}", type="primary", use_container_width=True, key="btn_switch_tf"):
-                            b_ctrl.switch_timeframe(new_timeframe=selected_tf, symbol=selected_symbol)
-                            st.success(f"Bot dialihkan ke {selected_tf}!")
+                    if b_stat["timeframe"] != selected_tf or b_stat.get("strategy_mode") != selected_strat:
+                        st.info(f"💡 Pilihan kontrol: **{selected_tf}** ({selected_strat}) | Sedang jalan: **{b_stat['timeframe']}** ({b_stat.get('strategy_mode')}).")
+                        if st.button(f"🔄 Beralih Sekarang ke Mode {selected_tf} ({selected_strat})", type="primary", use_container_width=True, key="btn_switch_tf"):
+                            b_ctrl.switch_timeframe(new_timeframe=selected_tf, symbol=selected_symbol, strategy_mode=selected_strat)
+                            st.success(f"Bot dialihkan ke {selected_tf} ({selected_strat})!")
                             st.rerun()
                 else:
                     st.info("⏸️ **STATUS: STANDBY (Mati)** — Klik 'Aktifkan Bot 24/7' untuk mulai trading otomatis.")
@@ -755,8 +793,10 @@ elif selected_tab == "💼 Live Paper Trading":
     b_stat = b_ctrl.get_status()
     with c_stat:
         if b_stat["is_running"]:
+            strat_short = "⚡ Pro Sniper" if b_stat.get("strategy_mode") == "pro_sniper" else "🛡️ Institusional"
+            score_short = f" | Confluence: **`{b_stat.get('last_score', 0)}/100`**" if b_stat.get("strategy_mode") == "pro_sniper" else ""
             st.success(
-                f"🟢 **Bot 24/7 Aktif ({b_stat['timeframe']})** | Lilin: `{b_stat['last_bar']}` | "
+                f"🟢 **Bot 24/7 Aktif ({b_stat['timeframe']} - {strat_short})**{score_short} | "
                 f"P(Long): **`{b_stat['last_prob']:.3f}`** | Aksi: **`{b_stat['last_action']}`**"
             )
         elif signals:
@@ -775,9 +815,11 @@ elif selected_tab == "💼 Live Paper Trading":
             p_val = last_sig.get("prob_long", 0.5)
             ts_val = last_sig.get("bar_timestamp", "")[:19]
             tf_used = raw_dict.get("timeframe", "5m")
+            score_val = raw_dict.get("score", None)
+            score_str = f" | Score: **`{score_val}/100`**" if score_val is not None else ""
             st.info(
                 f"📡 **Sinyal Terakhir ({tf_used})** | `{ts_val} UTC` | "
-                f"P(Long): **`{p_val:.3f}`** | Aksi: **`{action}`** | Alasan: `{reason}`"
+                f"P(Long): **`{p_val:.3f}`**{score_str} | Aksi: **`{action}`** | Alasan: `{reason}`"
             )
         else:
             st.info("🟢 **Sistem Siap** | Silakan jalankan Simulasi Instan atau Aktifkan Bot 24/7.")
@@ -794,8 +836,8 @@ elif selected_tab == "💼 Live Paper Trading":
     # REAL-TIME AI TELEMETRY HUD COCKPIT
     # -------------------------------------------------------------
     st.markdown("---")
-    st.markdown("#### 🛸 Live AI Telemetry & Cockpit Radar")
-    hud_c1, hud_c2, hud_c3 = st.columns(3)
+    st.markdown("#### 🛸 Live AI Telemetry & Pro Cockpit Radar")
+    hud_c1, hud_c2, hud_c3, hud_c4 = st.columns(4)
 
     last_prob = b_stat["last_prob"] if b_stat["is_running"] else (signals[0].get("prob_long", 0.50) if signals else 0.50)
     last_act = b_stat["last_action"] if b_stat["is_running"] else (signals[0].get("raw_data", {}).get("action", "FLAT") if signals and isinstance(signals[0].get("raw_data"), dict) else "FLAT")
@@ -803,7 +845,32 @@ elif selected_tab == "💼 Live Paper Trading":
     active_chart_tf = b_stat["timeframe"] if b_stat["is_running"] else selected_tf
     is_gold_active = "XAU" in active_chart_sym.upper() or "GOLD" in active_chart_sym.upper()
 
+    score_val = b_stat.get("last_score", 0) if b_stat["is_running"] else (signals[0].get("raw_data", {}).get("score", 0) if signals and isinstance(signals[0].get("raw_data"), dict) else 0)
+    tp_val = b_stat.get("take_profit") if b_stat["is_running"] else None
+    sl_val = b_stat.get("stop_loss") if b_stat["is_running"] else None
+    trail_stage = b_stat.get("trailing_stage", 0) if b_stat["is_running"] else 0
+    strat_current = b_stat.get("strategy_mode", "pro_sniper") if b_stat["is_running"] else selected_strat
+
     with hud_c1:
+        st.markdown("**🎯 Confluence Radar (0-100)**")
+        if score_val >= 80:
+            score_color = "#00E676"
+            score_grade = f"🌟 GRADE A+ ({score_val}/100)"
+        elif score_val >= 65:
+            score_color = "#00E5FF"
+            score_grade = f"⚡ GRADE A ({score_val}/100)"
+        elif score_val >= 40:
+            score_color = "#FFA726"
+            score_grade = f"⚠️ GRADE B ({score_val}/100)"
+        else:
+            score_color = "#B0BEC5"
+            score_grade = f"⚪ CHOP/LOW ({score_val}/100)"
+
+        st.markdown(f"<div style='font-size: 15px; font-weight: 700; color: {score_color}; margin-bottom: 6px;'>{score_grade}</div>", unsafe_allow_html=True)
+        st.progress(float(np.clip(score_val / 100.0, 0.0, 1.0)))
+        st.caption("Pemicu Entry: Score ≥ 65 (Trend + Momentum + Smart Money + AI Edge).")
+
+    with hud_c2:
         st.markdown("**🧠 AI Conviction Meter**")
         if last_prob >= 0.52:
             badge_color = "#00E676"
@@ -815,22 +882,23 @@ elif selected_tab == "💼 Live Paper Trading":
             badge_color = "#B0BEC5"
             badge_text = f"⚪ NEUTRAL DEADBAND ({last_prob:.1%})"
 
-        st.markdown(f"<div style='font-size: 16px; font-weight: 700; color: {badge_color}; margin-bottom: 6px;'>{badge_text}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-size: 15px; font-weight: 700; color: {badge_color}; margin-bottom: 6px;'>{badge_text}</div>", unsafe_allow_html=True)
         st.progress(float(np.clip(last_prob, 0.0, 1.0)))
-        st.caption("P(Long) > 52% memicu sinyal BUY jika expected edge melampaui biaya transaksi.")
-
-    with hud_c2:
-        st.markdown("**🌊 Volatility & Regime (HMM)**")
-        target_vol = "12% - 15%" if is_gold_active else "30% - 35%"
-        st.markdown(f"<div style='font-size: 16px; font-weight: 600; color: #00bcd4;'>Asset: {active_chart_sym}</div>", unsafe_allow_html=True)
-        st.write(f"- Target Annual Vol: **`{target_vol}`**\n- Sizing Engine: **`Adaptive Fractional Kelly`**")
+        st.caption("Model B Calibrated LightGBM Prob.")
 
     with hud_c3:
+        st.markdown("**🛡️ Trailing & Risk Brackets**")
+        tp_str = f"${tp_val:,.2f}" if tp_val else "Dynamic +1.8 ATR"
+        sl_str = f"${sl_val:,.2f}" if sl_val else "Dynamic -1.2 ATR"
+        trail_label = "🟢 BREAKEVEN LOCK" if trail_stage >= 1 else "⚪ INITIAL BRACKET"
+        st.markdown(f"<div style='font-size: 15px; font-weight: 700; color: #00bcd4; margin-bottom: 6px;'>{trail_label}</div>", unsafe_allow_html=True)
+        st.write(f"- TP: **`{tp_str}`**\n- SL: **`{sl_str}`**\n- Trailing Tier: **`{trail_stage}`**")
+
+    with hud_c4:
         st.markdown("**⚡ Live Execution State**")
-        sl_pct = "0.8% - 1.0%" if is_gold_active else "1.5% - 2.0%"
         act_color = "#00E676" if last_act == "BUY" else ("#FF1744" if last_act == "SELL" else "#FFA726")
-        st.markdown(f"<div style='font-size: 16px; font-weight: 700; color: {act_color};'>ACTION: {last_act}</div>", unsafe_allow_html=True)
-        st.write(f"- Active Stop Loss: **`{sl_pct}`**\n- Taker Fee Friction: **`10 bps (0.10%)`**")
+        st.markdown(f"<div style='font-size: 15px; font-weight: 700; color: {act_color}; margin-bottom: 6px;'>ACTION: {last_act}</div>", unsafe_allow_html=True)
+        st.write(f"- Mode: **`{'Pro Sniper' if strat_current == 'pro_sniper' else 'Institutional'}`**\n- Target WR: **`~70% (Min 7W/3L)`**\n- Asset: **`{active_chart_sym}`**")
 
     # -------------------------------------------------------------
     # LIVE TRADING CHARTS (PLOTLY OVERLAY + TRADINGVIEW PRO)
@@ -868,7 +936,7 @@ elif selected_tab == "💼 Live Paper Trading":
                     {
                         "Timestamp": o.get("bar_timestamp", "")[:19],
                         "Side": o.get("side", ""),
-                        "Qty (BTC)": f"{o.get('qty', 0.0):.4f}",
+                        "Qty": f"{o.get('qty', 0.0):.4f}",
                         "Fill Price": f"${o.get('fill_price', 0.0):,.2f}",
                         "Fee": f"${o.get('fee', 0.0):.2f}",
                         "Target Wt": f"{o.get('target_weight', 0.0):.2f}",
@@ -892,14 +960,15 @@ elif selected_tab == "💼 Live Paper Trading":
                 else:
                     raw = raw_data if isinstance(raw_data, dict) else {}
 
+                score_display = f"{raw.get('score', '-')}" if "score" in raw else "-"
                 sig_rows.append(
                     {
                         "Timestamp": s.get("bar_timestamp", "")[:19],
                         "P(Long)": f"{s.get('prob_long', 0.5):.3f}",
+                        "Score": score_display,
                         "Action": raw.get("action", "HOLD"),
                         "Target Wt": f"{raw.get('target_size', 0.0):.2f}",
                         "Decision Reason": raw.get("decision_reason", "N/A"),
-                        "Expected Edge": f"{raw.get('expected_edge', 0.0):.4f}",
                     }
                 )
             st.dataframe(pd.DataFrame(sig_rows), width="stretch", height=280)

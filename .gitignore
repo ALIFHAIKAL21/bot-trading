@@ -8,6 +8,8 @@ __pycache__/
 # Local data cache (large files)
 data/cache/
 data/paper_trading.db
+data/*.db
+*.db
 logs/
 *.log
 
