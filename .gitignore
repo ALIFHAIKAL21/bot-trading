@@ -9,7 +9,9 @@ __pycache__/
 data/cache/
 data/paper_trading.db
 data/*.db
+data/bot_state.json
 *.db
+*.db-journal
 logs/
 *.log
 

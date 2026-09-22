@@ -7,6 +7,7 @@ Enables full control directly from Streamlit dashboard:
 - Thread-safe state tracking (heartbeat, active positions, logs).
 """
 
+import json
 import threading
 import time
 from datetime import datetime, timezone, timedelta
@@ -113,13 +114,78 @@ class BotController:
         self.last_action = "FLAT"
         self.last_reason = "Initialized"
 
+    STATE_FILE = ROOT_DIR / "data" / "bot_state.json"
+
+    def _save_state_file(self):
+        try:
+            self.STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            data = {
+                "is_running": bool(self.is_running),
+                "strategy_mode": getattr(self, "strategy_mode", "pro_sniper"),
+                "timeframe": getattr(self, "timeframe", "5m"),
+                "symbol": getattr(self, "symbol", "BTC/USDT"),
+                "last_heartbeat": self.last_heartbeat.strftime("%Y-%m-%d %H:%M:%S UTC") if getattr(self, "last_heartbeat", None) else "Never",
+                "status_msg": getattr(self, "last_status_msg", "Idle"),
+                "last_bar": getattr(self, "last_bar_evaluated", "None") or "None",
+                "last_prob": float(getattr(self, "last_prob", 0.50)),
+                "last_score": float(getattr(self, "last_score", 0.0)),
+                "take_profit": float(getattr(self, "take_profit_price", 0.0)),
+                "stop_loss": float(getattr(self, "stop_loss_price", 0.0)),
+                "trailing_stage": int(getattr(self, "trailing_stage", 0)),
+                "last_action": getattr(self, "last_action", "FLAT"),
+                "last_reason": getattr(self, "last_reason", "Initialized"),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            with open(self.STATE_FILE, "w") as f:
+                json.dump(data, f, indent=2)
+        except Exception as e:
+            logger.warning(f"Failed to save bot state file: {e}")
+
+    def _load_state_file(self) -> Optional[Dict]:
+        try:
+            if self.STATE_FILE.exists():
+                with open(self.STATE_FILE, "r") as f:
+                    data = json.load(f)
+                updated_at_str = data.get("updated_at")
+                if updated_at_str:
+                    up_dt = datetime.fromisoformat(updated_at_str)
+                    age_sec = (datetime.now(timezone.utc) - up_dt).total_seconds()
+                    if age_sec < 90 and data.get("is_running", False):
+                        return data
+        except Exception as e:
+            logger.warning(f"Failed to load bot state file: {e}")
+        return None
+
     def get_status(self) -> Dict:
+        running = self.is_running and (self.thread is not None and self.thread.is_alive())
+        if running:
+            return {
+                "is_running": True,
+                "strategy_mode": getattr(self, "strategy_mode", "pro_sniper"),
+                "timeframe": self.timeframe,
+                "symbol": self.symbol,
+                "last_heartbeat": self.last_heartbeat.strftime("%Y-%m-%d %H:%M:%S UTC") if self.last_heartbeat else "Never",
+                "status_msg": self.last_status_msg,
+                "last_bar": self.last_bar_evaluated or "None",
+                "last_prob": self.last_prob,
+                "last_score": getattr(self, "last_score", 0.0),
+                "take_profit": getattr(self, "take_profit_price", 0.0),
+                "stop_loss": getattr(self, "stop_loss_price", 0.0),
+                "trailing_stage": getattr(self, "trailing_stage", 0),
+                "last_action": self.last_action,
+                "last_reason": self.last_reason,
+            }
+
+        file_state = self._load_state_file()
+        if file_state:
+            return file_state
+
         return {
-            "is_running": self.is_running,
+            "is_running": False,
             "strategy_mode": getattr(self, "strategy_mode", "pro_sniper"),
             "timeframe": self.timeframe,
             "symbol": self.symbol,
-            "last_heartbeat": self.last_heartbeat.strftime("%Y-%m-%d %H:%M:%S UTC") if self.last_heartbeat else "Never",
+            "last_heartbeat": self.last_heartbeat.strftime("%Y-%m-%d %H:%M:%S UTC") if getattr(self, "last_heartbeat", None) else "Never",
             "status_msg": self.last_status_msg,
             "last_bar": self.last_bar_evaluated or "None",
             "last_prob": self.last_prob,
@@ -133,7 +199,7 @@ class BotController:
 
     def start(self, timeframe: str = "5m", symbol: str = "BTC/USDT", strategy_mode: str = "pro_sniper", *args, **kwargs):
         with self._lock:
-            if self.is_running:
+            if self.is_running and self.thread and self.thread.is_alive():
                 logger.info("Bot is already running.")
                 return True
 
@@ -145,6 +211,7 @@ class BotController:
             self.last_heartbeat = datetime.now(timezone.utc)
             mode_desc = "Pro Sniper (Trader Kakap)" if strategy_mode == "pro_sniper" else "Institusional (Konservatif)"
             self.last_status_msg = f"Starting 24/7 {timeframe} worker ({mode_desc}) for {symbol}..."
+            self._save_state_file()
             self.thread = threading.Thread(target=self._worker_loop, daemon=True)
             self.thread.start()
             logger.info(f"BotController started background thread for {symbol} ({timeframe}, {strategy_mode}).")
@@ -152,10 +219,10 @@ class BotController:
 
     def stop(self):
         with self._lock:
-            if not self.is_running:
-                return True
             self.should_stop = True
+            self.is_running = False
             self.last_status_msg = "Stopping bot worker..."
+            self._save_state_file()
             logger.info("BotController signaling stop to worker thread.")
             return True
 
@@ -209,6 +276,7 @@ class BotController:
                 try:
                     self.last_heartbeat = datetime.now(timezone.utc)
                     self.last_status_msg = f"Listening for closed {self.timeframe} candles on {self.symbol}..."
+                    self._save_state_file()
 
                     # Fetch recent candles
                     days = 1 if self.timeframe == "1m" else (3 if self.timeframe == "5m" else 14)
@@ -360,10 +428,12 @@ class BotController:
                         decision_reason=decision_reason,
                         target_weight=target_weight,
                     )
+                    self._save_state_file()
 
                 except Exception as e:
                     logger.error(f"Error in 24/7 bot loop: {e}")
                     self.last_status_msg = f"Error: {e}"
+                    self._save_state_file()
 
                 time.sleep(poll_sec)
 
@@ -372,6 +442,7 @@ class BotController:
             self.last_status_msg = f"Fatal error: {fatal_e}"
         finally:
             self.is_running = False
+            self._save_state_file()
             if not fatal_e:
                 self.last_status_msg = "Bot paused by user."
             logger.info("Worker thread exited cleanly.")
