@@ -1,0 +1,25 @@
+{
+  "top_config": {
+    "sl_mult": 1.0,
+    "tp_r": 1.5,
+    "scale_up": true,
+    "final_equity": 5888.79,
+    "net_pnl": 5688.79,
+    "return_pct": 2844.4,
+    "max_dd_pct": -66.0,
+    "min_equity": 83.2,
+    "win_rate": 56.61,
+    "total_trades": 189
+  },
+  "best_fixed_config": {
+    "sl_mult": 1.2,
+    "tp_r": 1.8,
+    "final_equity": 1868.95,
+    "net_pnl": 1668.95,
+    "return_pct": 834.47,
+    "max_dd_pct": -82.04,
+    "min_equity": 62.42,
+    "win_rate": 53.44,
+    "total_trades": 189
+  }
+}

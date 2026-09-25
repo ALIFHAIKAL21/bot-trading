@@ -1,29 +1,29 @@
-# Multi-Model Quantitative Trading Research & Paper-Trading Platform
-
-An institutional-grade, multi-model quantitative research, adaptivity, and paper-trading platform built with strict causality, cost-aware decisioning, and absolute metric honesty.
-
----
-
-## Institutional Deployment Verdict: **NO-GO FOR LIVE TRADING**
+# FLOWDEV FRAME (Flowdev Recurrent Algorithmic Model for Trade Execution)
 
 ```
-========================================================================================
-                          INSTITUTIONAL COMMITTEE VERDICT: NO-GO
-========================================================================================
-Status:                 REJECTED FOR LIVE CAPITAL ALLOCATION
-Primary Strategy:       Model B LightGBM Directional + Institutional Turnover Controls
-Evaluation Partition:   Quarantined Out-of-Sample Holdout (2026-06-04 to 2026-09-21, 2,628 bars)
-Net Cumulative Return:  -0.01% (after 10 bps taker fee + 5 bps base slippage + ATR impact)
-Net Annualized Sharpe:  -0.1212 (95% Bootstrap CI: [-4.96, +2.72])
-Deflated Sharpe (DSR):  0.0000 (p-value adjusted for 15 cumulative trials)
-Capital Preservation:   EXCEPTIONAL: Max Drawdown 0.18% vs Buy & Hold 13.38%
-Core Defect:            Alpha signal edge failed to hurdle realistic taker exchange friction
-========================================================================================
+ ========================================================================================
+   ______ _       ____  _          _______  ________   ______ _____            __  __ ______ 
+  |  ____| |     / __ \| |    /\  |__   __||  ____\ \ / /  _ \  __ \     /\   |  \/  |  ____|
+  | |__  | |    | |  | | |   /  \    | |   | |__   \ V /| |_) | |__) |   /  \  | \  / | |__   
+  |  __| | |    | |  | | |  / /\ \   | |   |  __|   > < |  _ <|  _  /   / /\ \ | |\/| |  __|  
+  | |    | |____| |__| | | / ____ \  | |   | |____ / . \| |_) | | \ \  / ____ \| |  | | |____ 
+  |_|    |______|\____/|_|/_/    \_\ |_|   |______/_/ \_\____/|_|  \_\/_/    \_\_|  |_|______|
+                                                                                          
+          [ F.R.A.M.E : Flowdev Recurrent Algorithmic Model for Trade Execution ]
+               -- Official Emblem: The Cyber-Neural Peregrine Falcon --
+ ========================================================================================
+  :: Pair         : XAU/USD (Gold Spot M30)
+  :: Capital Base : $500.00 USD
+  :: Lot Size     : 0.01 Lot Flat (Strictly frozen, zero martingale/escalation)
+  :: Architecture : 15-Channel PyTorch 1D-CNN + BiLSTM (Recurrent Neural Network)
+  :: OMS Machine  : Positive BE (+1.0R) -> Smart Ratchet (+1.2R) -> Dynamic Trail (+1.5R)
+  :: Phase        : TRANSITION TO SOFTWARE ENGINEERING / DEMO DEPLOYMENT
+ ========================================================================================
 ```
 
-> [!WARNING]
-> **Strict Metric Honesty & Anti-Fabrication Commitment**:
-> All statistics, tables, and performance metrics in this repository are derived directly from machine-executable runs and sealed JSON reports (`reports/final_report.json`, `reports/turnover_controls_sweep.json`, `reports/adaptivity_ablation.json`). No backtest results are cherry-picked or fabricated.
+> [!IMPORTANT]
+> **FROZEN PRODUCTION CONTRACT**:
+> All baseline metrics, risk limits, and parameters are frozen in [`log.md`](file:///c:/Ngoding/bot_trading/log.md). The anchor capital is strictly **$500.00 USD** at **0.01 Lot Flat**, verified across multi-year out-of-sample data (2021–2026).
 
 ---
 

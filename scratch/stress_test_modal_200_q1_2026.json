@@ -1,0 +1,90 @@
+[
+  {
+    "name": "1. 3T/Day Standar 0.02 Lot (Twin-Order)",
+    "final_equity": 12.58,
+    "min_equity": 12.58,
+    "net_pnl": -187.42,
+    "return_pct": -93.71,
+    "max_dd_pct": -93.71,
+    "total_trades": 5,
+    "win_rate": 0.0,
+    "margin_called": true
+  },
+  {
+    "name": "2. 3T/Day Standar 0.01 Lot Flat",
+    "final_equity": 3.22,
+    "min_equity": 3.22,
+    "net_pnl": -196.78,
+    "return_pct": -98.39,
+    "max_dd_pct": -99.0,
+    "total_trades": 63,
+    "win_rate": 47.62,
+    "margin_called": true
+  },
+  {
+    "name": "3. 3T/Day 0.01 Lot + Tight SL (1.0 ATR)",
+    "final_equity": 1468.89,
+    "min_equity": 137.23,
+    "net_pnl": 1268.89,
+    "return_pct": 634.44,
+    "max_dd_pct": -46.24,
+    "total_trades": 189,
+    "win_rate": 65.61,
+    "margin_called": false
+  },
+  {
+    "name": "4. Sniper Filter (Tau>=0.40) 0.01 Lot",
+    "final_equity": 489.81,
+    "min_equity": 114.89,
+    "net_pnl": 289.81,
+    "return_pct": 144.9,
+    "max_dd_pct": -51.46,
+    "total_trades": 25,
+    "win_rate": 68.0,
+    "margin_called": false
+  },
+  {
+    "name": "5. Sniper Filter (Tau>=0.38) + Structural OB/MA Gate",
+    "final_equity": 12.92,
+    "min_equity": 12.92,
+    "net_pnl": -187.08,
+    "return_pct": -93.54,
+    "max_dd_pct": -96.48,
+    "total_trades": 13,
+    "win_rate": 69.23,
+    "margin_called": true
+  },
+  {
+    "name": "6. Sniper Stepwise Compounding (0.01 -> 0.02 -> 0.03)",
+    "final_equity": 12.92,
+    "min_equity": 12.92,
+    "net_pnl": -187.08,
+    "return_pct": -93.54,
+    "max_dd_pct": -96.48,
+    "total_trades": 13,
+    "win_rate": 69.23,
+    "margin_called": true
+  },
+  {
+    "name": "7. STRESS TEST: 2x Spread & Slippage Shock",
+    "final_equity": 10.65,
+    "min_equity": 10.65,
+    "net_pnl": -189.35,
+    "return_pct": -94.68,
+    "max_dd_pct": -97.08,
+    "total_trades": 13,
+    "win_rate": 69.23,
+    "margin_called": true
+  },
+  {
+    "name": "8. Akun Cent (Mikro Proportional 1% Risk)",
+    "final_equity": 767.69,
+    "min_equity": 72.1,
+    "net_pnl": 567.69,
+    "return_pct": 283.85,
+    "max_dd_pct": -68.92,
+    "total_trades": 189,
+    "win_rate": 62.96,
+    "margin_called": false
+  }
+]

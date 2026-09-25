@@ -1,0 +1,587 @@
+{
+  "timeframe": "1h",
+  "target_rr": 2,
+  "confidence_tau": 0.33,
+  "overall_summary": {
+    "initial_equity": 10000.0,
+    "final_equity": 9854.51,
+    "net_pnl": -145.49,
+    "net_return_pct": -1.45,
+    "total_trades": 966,
+    "win_rate": 35.71,
+    "profit_factor": 0.997,
+    "max_drawdown_pct": 43.2,
+    "max_drawdown_usd": 5569.22,
+    "sharpe_ratio": 0.09,
+    "total_friction": 1928.99
+  },
+  "consistency_metrics": {
+    "total_months": 61,
+    "profit_months": 30,
+    "loss_months": 31,
+    "pct_profit_months": 49.18,
+    "avg_monthly_return_pct": -0.02,
+    "best_month": {
+      "year_month": "2022-12",
+      "trades": 18,
+      "win_rate": 50.0,
+      "net_pnl": 847.41,
+      "return_pct": 8.47,
+      "status": "PROFIT"
+    },
+    "worst_month": {
+      "year_month": "2023-07",
+      "trades": 29,
+      "win_rate": 17.24,
+      "net_pnl": -1707.6,
+      "return_pct": -17.08,
+      "status": "LOSS"
+    }
+  },
+  "yearly_stats": [
+    {
+      "year": 2021,
+      "trades": 34,
+      "win_rate": 41.18,
+      "profit_factor": 1.21,
+      "net_pnl": 406.21,
+      "net_return_pct": 4.06,
+      "expectancy_r": 0.129
+    },
+    {
+      "year": 2022,
+      "trades": 175,
+      "win_rate": 37.14,
+      "profit_factor": 1.1,
+      "net_pnl": 1121.52,
+      "net_return_pct": 11.22,
+      "expectancy_r": 0.07
+    },
+    {
+      "year": 2023,
+      "trades": 274,
+      "win_rate": 31.02,
+      "profit_factor": 0.81,
+      "net_pnl": -3718.35,
+      "net_return_pct": -37.18,
+      "expectancy_r": -0.136
+    },
+    {
+      "year": 2024,
+      "trades": 167,
+      "win_rate": 37.13,
+      "profit_factor": 1.07,
+      "net_pnl": 578.03,
+      "net_return_pct": 5.78,
+      "expectancy_r": 0.049
+    },
+    {
+      "year": 2025,
+      "trades": 157,
+      "win_rate": 38.22,
+      "profit_factor": 1.11,
+      "net_pnl": 820.9,
+      "net_return_pct": 8.21,
+      "expectancy_r": 0.089
+    },
+    {
+      "year": 2026,
+      "trades": 159,
+      "win_rate": 37.11,
+      "profit_factor": 1.09,
+      "net_pnl": 646.2,
+      "net_return_pct": 6.46,
+      "expectancy_r": 0.059
+    }
+  ],
+  "monthly_stats": [
+    {
+      "year_month": "2021-09",
+      "trades": 4,
+      "win_rate": 25.0,
+      "net_pnl": -118.19,
+      "return_pct": -1.18,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2021-10",
+      "trades": 12,
+      "win_rate": 41.67,
+      "net_pnl": 243.85,
+      "return_pct": 2.44,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2021-11",
+      "trades": 6,
+      "win_rate": 50.0,
+      "net_pnl": 198.39,
+      "return_pct": 1.98,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2021-12",
+      "trades": 12,
+      "win_rate": 41.67,
+      "net_pnl": 82.16,
+      "return_pct": 0.82,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2022-01",
+      "trades": 15,
+      "win_rate": 20.0,
+      "net_pnl": -659.52,
+      "return_pct": -6.6,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2022-02",
+      "trades": 8,
+      "win_rate": 62.5,
+      "net_pnl": 545.18,
+      "return_pct": 5.45,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2022-03",
+      "trades": 13,
+      "win_rate": 30.77,
+      "net_pnl": -143.91,
+      "return_pct": -1.44,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2022-04",
+      "trades": 15,
+      "win_rate": 46.67,
+      "net_pnl": 550.01,
+      "return_pct": 5.5,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2022-05",
+      "trades": 10,
+      "win_rate": 50.0,
+      "net_pnl": 486.59,
+      "return_pct": 4.87,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2022-06",
+      "trades": 10,
+      "win_rate": 30.0,
+      "net_pnl": -320.69,
+      "return_pct": -3.21,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2022-07",
+      "trades": 12,
+      "win_rate": 8.33,
+      "net_pnl": -856.77,
+      "return_pct": -8.57,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2022-08",
+      "trades": 12,
+      "win_rate": 25.0,
+      "net_pnl": -344.8,
+      "return_pct": -3.45,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2022-09",
+      "trades": 20,
+      "win_rate": 40.0,
+      "net_pnl": 323.08,
+      "return_pct": 3.23,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2022-10",
+      "trades": 19,
+      "win_rate": 42.11,
+      "net_pnl": 461.97,
+      "return_pct": 4.62,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2022-11",
+      "trades": 23,
+      "win_rate": 39.13,
+      "net_pnl": 232.97,
+      "return_pct": 2.33,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2022-12",
+      "trades": 18,
+      "win_rate": 50.0,
+      "net_pnl": 847.41,
+      "return_pct": 8.47,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2023-01",
+      "trades": 24,
+      "win_rate": 37.5,
+      "net_pnl": 84.72,
+      "return_pct": 0.85,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2023-02",
+      "trades": 19,
+      "win_rate": 42.11,
+      "net_pnl": 210.5,
+      "return_pct": 2.1,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2023-03",
+      "trades": 20,
+      "win_rate": 40.0,
+      "net_pnl": 187.52,
+      "return_pct": 1.88,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2023-04",
+      "trades": 22,
+      "win_rate": 40.91,
+      "net_pnl": 500.97,
+      "return_pct": 5.01,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2023-05",
+      "trades": 29,
+      "win_rate": 20.69,
+      "net_pnl": -1345.51,
+      "return_pct": -13.46,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2023-06",
+      "trades": 29,
+      "win_rate": 34.48,
+      "net_pnl": -9.12,
+      "return_pct": -0.09,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2023-07",
+      "trades": 29,
+      "win_rate": 17.24,
+      "net_pnl": -1707.6,
+      "return_pct": -17.08,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2023-08",
+      "trades": 31,
+      "win_rate": 25.81,
+      "net_pnl": -770.02,
+      "return_pct": -7.7,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2023-09",
+      "trades": 19,
+      "win_rate": 21.05,
+      "net_pnl": -776.11,
+      "return_pct": -7.76,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2023-10",
+      "trades": 20,
+      "win_rate": 35.0,
+      "net_pnl": -57.81,
+      "return_pct": -0.58,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2023-11",
+      "trades": 15,
+      "win_rate": 33.33,
+      "net_pnl": -56.43,
+      "return_pct": -0.56,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2023-12",
+      "trades": 17,
+      "win_rate": 35.29,
+      "net_pnl": 20.54,
+      "return_pct": 0.21,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2024-01",
+      "trades": 17,
+      "win_rate": 35.29,
+      "net_pnl": -102.34,
+      "return_pct": -1.02,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2024-02",
+      "trades": 17,
+      "win_rate": 41.18,
+      "net_pnl": 235.31,
+      "return_pct": 2.35,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2024-03",
+      "trades": 17,
+      "win_rate": 41.18,
+      "net_pnl": 169.12,
+      "return_pct": 1.69,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2024-04",
+      "trades": 18,
+      "win_rate": 27.78,
+      "net_pnl": -191.52,
+      "return_pct": -1.92,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2024-05",
+      "trades": 14,
+      "win_rate": 35.71,
+      "net_pnl": -51.53,
+      "return_pct": -0.52,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2024-06",
+      "trades": 14,
+      "win_rate": 42.86,
+      "net_pnl": 212.5,
+      "return_pct": 2.12,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2024-07",
+      "trades": 12,
+      "win_rate": 25.0,
+      "net_pnl": -258.69,
+      "return_pct": -2.59,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2024-08",
+      "trades": 15,
+      "win_rate": 40.0,
+      "net_pnl": 220.98,
+      "return_pct": 2.21,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2024-09",
+      "trades": 11,
+      "win_rate": 36.36,
+      "net_pnl": 32.17,
+      "return_pct": 0.32,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2024-10",
+      "trades": 13,
+      "win_rate": 30.77,
+      "net_pnl": -105.02,
+      "return_pct": -1.05,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2024-11",
+      "trades": 10,
+      "win_rate": 30.0,
+      "net_pnl": -114.71,
+      "return_pct": -1.15,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2024-12",
+      "trades": 9,
+      "win_rate": 66.67,
+      "net_pnl": 531.76,
+      "return_pct": 5.32,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2025-01",
+      "trades": 11,
+      "win_rate": 45.45,
+      "net_pnl": 305.16,
+      "return_pct": 3.05,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2025-02",
+      "trades": 12,
+      "win_rate": 16.67,
+      "net_pnl": -515.94,
+      "return_pct": -5.16,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2025-03",
+      "trades": 16,
+      "win_rate": 31.25,
+      "net_pnl": -97.33,
+      "return_pct": -0.97,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2025-04",
+      "trades": 8,
+      "win_rate": 25.0,
+      "net_pnl": -126.99,
+      "return_pct": -1.27,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2025-05",
+      "trades": 13,
+      "win_rate": 30.77,
+      "net_pnl": -64.04,
+      "return_pct": -0.64,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2025-06",
+      "trades": 9,
+      "win_rate": 44.44,
+      "net_pnl": 184.15,
+      "return_pct": 1.84,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2025-07",
+      "trades": 9,
+      "win_rate": 33.33,
+      "net_pnl": -1.86,
+      "return_pct": -0.02,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2025-08",
+      "trades": 12,
+      "win_rate": 33.33,
+      "net_pnl": -102.86,
+      "return_pct": -1.03,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2025-09",
+      "trades": 11,
+      "win_rate": 54.55,
+      "net_pnl": 499.31,
+      "return_pct": 4.99,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2025-10",
+      "trades": 20,
+      "win_rate": 35.0,
+      "net_pnl": -55.74,
+      "return_pct": -0.56,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2025-11",
+      "trades": 14,
+      "win_rate": 57.14,
+      "net_pnl": 200.53,
+      "return_pct": 2.01,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2025-12",
+      "trades": 22,
+      "win_rate": 45.45,
+      "net_pnl": 596.51,
+      "return_pct": 5.97,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2026-01",
+      "trades": 19,
+      "win_rate": 31.58,
+      "net_pnl": -236.93,
+      "return_pct": -2.37,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2026-02",
+      "trades": 15,
+      "win_rate": 26.67,
+      "net_pnl": -183.78,
+      "return_pct": -1.84,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2026-03",
+      "trades": 18,
+      "win_rate": 38.89,
+      "net_pnl": 210.8,
+      "return_pct": 2.11,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2026-04",
+      "trades": 21,
+      "win_rate": 33.33,
+      "net_pnl": -193.31,
+      "return_pct": -1.93,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2026-05",
+      "trades": 21,
+      "win_rate": 33.33,
+      "net_pnl": -150.47,
+      "return_pct": -1.5,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2026-06",
+      "trades": 14,
+      "win_rate": 50.0,
+      "net_pnl": 446.33,
+      "return_pct": 4.46,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2026-07",
+      "trades": 24,
+      "win_rate": 33.33,
+      "net_pnl": -46.96,
+      "return_pct": -0.47,
+      "status": "LOSS"
+    },
+    {
+      "year_month": "2026-08",
+      "trades": 17,
+      "win_rate": 47.06,
+      "net_pnl": 405.51,
+      "return_pct": 4.06,
+      "status": "PROFIT"
+    },
+    {
+      "year_month": "2026-09",
+      "trades": 10,
+      "win_rate": 50.0,
+      "net_pnl": 395.01,
+      "return_pct": 3.95,
+      "status": "PROFIT"
+    }
+  ]
+}

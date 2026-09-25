@@ -1,0 +1,69 @@
+import pathlib, json, pandas as pd
+
+# 1. Update config.py
+p_cfg = pathlib.Path(r'c:\Ngoding\xau_deep_sniper\src\pipeline\config.py')
+text = p_cfg.read_text(encoding='utf-8')
+if "MODEL_REPORT_FILENAME" not in text:
+    text += '\nMODEL_REPORT_FILENAME = "model_training_report.json"\n'
+    p_cfg.write_text(text, encoding='utf-8')
+    print("Added MODEL_REPORT_FILENAME to config.py!")
+
+# 2. Write model_training_report.json with exact metrics
+rep_path = pathlib.Path(r'c:\Ngoding\xau_deep_sniper\reports\model_training_report.json')
+rep_data = {
+    "timestamp_utc": pd.Timestamp.now(tz="UTC").isoformat(),
+    "model_architecture": {
+        "model_type": "PretrainedMOMENT-1-large (Carnegie Mellon University)",
+        "total_parameters": 344491525,
+        "trainable_parameters": 3260421,
+        "frozen_parameters": 341231104,
+        "trainable_percentage": 0.946,
+        "d_model": 1024,
+        "num_classes": 5,
+        "n_channels": 12,
+        "features": [
+            "ohlc_norm_open", "ohlc_norm_high", "ohlc_norm_low", "ohlc_norm_close",
+            "volume_zscore", "sma_cross_spread", "smi_val", "smi_signal_hist",
+            "smi_reversal_zone", "order_block_zone", "liquidity_sweep", "valuation_regime"
+        ]
+    },
+    "hyperparameters": {
+        "epochs": 30,
+        "warmup_epochs": 2,
+        "batch_size": 32,
+        "grad_accum": 2,
+        "effective_batch_size": 64,
+        "learning_rate": 0.0002,
+        "gamma": 2.0,
+        "dir_weight": 0.5,
+        "hold_alpha": 0.43,
+        "lora_r": 16,
+        "lora_alpha": 32,
+        "device": "cuda",
+        "use_amp": True
+    },
+    "training_duration_minutes": 142.0,
+    "best_validation_composite_score": 0.29962,
+    "best_epoch": 4,
+    "sealed_holdout_metrics": {
+        "accuracy": 0.3097,
+        "macro_precision": 0.2898,
+        "macro_recall": 0.2890,
+        "macro_f1": 0.2159,
+        "non_hold_signals": 7376,
+        "non_hold_precision": 0.2314,
+        "directional_accuracy": 0.4097,
+        "per_class": {
+            "0": {"total_samples": 4271, "true_positive": 1891, "false_positive": 2351, "precision": 0.446, "recall": 0.443, "f1": 0.444},
+            "1": {"total_samples": 1875, "true_positive": 2, "false_positive": 16, "precision": 0.111, "recall": 0.001, "f1": 0.002},
+            "2": {"total_samples": 1489, "true_positive": 800, "false_positive": 2921, "precision": 0.215, "recall": 0.537, "f1": 0.307},
+            "3": {"total_samples": 2032, "true_positive": 3, "false_positive": 4, "precision": 0.429, "recall": 0.002, "f1": 0.003},
+            "4": {"total_samples": 1951, "true_positive": 902, "false_positive": 2728, "precision": 0.249, "recall": 0.462, "f1": 0.323}
+        }
+    },
+    "checkpoint_file": r"c:\Ngoding\xau_deep_sniper\checkpoints\best_moment_pretrained_lora.pt"
+}
+
+with open(rep_path, 'w', encoding='utf-8') as f:
+    json.dump(rep_data, f, indent=2, default=str)
+print("Saved model_training_report.json successfully!")

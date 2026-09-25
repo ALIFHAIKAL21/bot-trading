@@ -1,0 +1,158 @@
+{
+  "baseline": {
+    "2021": {
+      "trades": 22,
+      "wins": 15,
+      "losses": 7,
+      "wr": 68.2,
+      "net_pnl": 618.87,
+      "return_pct": 6.19,
+      "max_dd": -2.06,
+      "pf": 1.81
+    },
+    "2022": {
+      "trades": 118,
+      "wins": 81,
+      "losses": 37,
+      "wr": 68.6,
+      "net_pnl": 3801.39,
+      "return_pct": 38.01,
+      "max_dd": -5.54,
+      "pf": 1.85
+    },
+    "2023": {
+      "trades": 119,
+      "wins": 61,
+      "losses": 58,
+      "wr": 51.3,
+      "net_pnl": -922.71,
+      "return_pct": -9.23,
+      "max_dd": -20.18,
+      "pf": 0.84
+    },
+    "2024": {
+      "trades": 111,
+      "wins": 55,
+      "losses": 56,
+      "wr": 49.5,
+      "net_pnl": -1155.33,
+      "return_pct": -11.55,
+      "max_dd": -18.76,
+      "pf": 0.77
+    },
+    "2025": {
+      "trades": 95,
+      "wins": 60,
+      "losses": 35,
+      "wr": 63.2,
+      "net_pnl": 2329.35,
+      "return_pct": 23.29,
+      "max_dd": -3.61,
+      "pf": 1.62
+    }
+  },
+  "option_b_align": {
+    "2021": {
+      "trades": 16,
+      "wins": 11,
+      "losses": 5,
+      "wr": 68.8,
+      "net_pnl": 560.78,
+      "return_pct": 5.61,
+      "max_dd": -2.03,
+      "pf": 2.06
+    },
+    "2022": {
+      "trades": 86,
+      "wins": 57,
+      "losses": 29,
+      "wr": 66.3,
+      "net_pnl": 2530.18,
+      "return_pct": 25.3,
+      "max_dd": -4.83,
+      "pf": 1.8
+    },
+    "2023": {
+      "trades": 78,
+      "wins": 42,
+      "losses": 36,
+      "wr": 53.8,
+      "net_pnl": -200.96,
+      "return_pct": -2.01,
+      "max_dd": -12.27,
+      "pf": 0.94
+    },
+    "2024": {
+      "trades": 63,
+      "wins": 37,
+      "losses": 26,
+      "wr": 58.7,
+      "net_pnl": 283.17,
+      "return_pct": 2.83,
+      "max_dd": -9.19,
+      "pf": 1.12
+    },
+    "2025": {
+      "trades": 61,
+      "wins": 40,
+      "losses": 21,
+      "wr": 65.6,
+      "net_pnl": 1737.98,
+      "return_pct": 17.38,
+      "max_dd": -3.9,
+      "pf": 1.81
+    }
+  },
+  "option_b_smart": {
+    "2021": {
+      "trades": 16,
+      "wins": 11,
+      "losses": 5,
+      "wr": 68.8,
+      "net_pnl": 383.1,
+      "return_pct": 3.83,
+      "max_dd": -2.03,
+      "pf": 1.72
+    },
+    "2022": {
+      "trades": 86,
+      "wins": 57,
+      "losses": 29,
+      "wr": 66.3,
+      "net_pnl": 2501.35,
+      "return_pct": 25.01,
+      "max_dd": -4.86,
+      "pf": 1.79
+    },
+    "2023": {
+      "trades": 78,
+      "wins": 42,
+      "losses": 36,
+      "wr": 53.8,
+      "net_pnl": -187.84,
+      "return_pct": -1.88,
+      "max_dd": -11.41,
+      "pf": 0.95
+    },
+    "2024": {
+      "trades": 63,
+      "wins": 37,
+      "losses": 26,
+      "wr": 58.7,
+      "net_pnl": 252.61,
+      "return_pct": 2.53,
+      "max_dd": -9.32,
+      "pf": 1.1
+    },
+    "2025": {
+      "trades": 61,
+      "wins": 40,
+      "losses": 21,
+      "wr": 65.6,
+      "net_pnl": 1527.88,
+      "return_pct": 15.28,
+      "max_dd": -4.09,
+      "pf": 1.73
+    }
+  }
+}
